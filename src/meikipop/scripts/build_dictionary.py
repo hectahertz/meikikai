@@ -10,6 +10,7 @@ import json
 import os
 import pickle
 import re
+import sys
 import time
 from collections import Counter, defaultdict
 from itertools import count
@@ -32,6 +33,7 @@ DEFAULT_FREQ       = 999_999
 
 URLS = {
     'jmdict_e':  'http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz',
+    'jmnedict': 'http://ftp.edrdg.org/pub/Nihongo/JMnedict.xml.gz',
     'kanjidic':  'http://www.edrdg.org/kanjidic/kanjidic2.xml.gz',
     'ids':       'https://raw.githubusercontent.com/cjkvi/cjkvi-ids/master/ids.txt',
     'frequency': 'https://api.jiten.moe/api/frequency-list/download?downloadType=csv',
@@ -111,10 +113,10 @@ def load_freq_map(csv_bytes: bytes) -> dict:
     return result
 
 
-# ── JMdict parsing ─────────────────────────────────────────────────────────────
+# ── XML Parsing ────────────────────────────────────────────────────────────────
 
-def parse_jmdict_root(gz_bytes: bytes):
-    """Parse JMdict_e from gzipped bytes, resolving entity references."""
+def parse_gzipped_xml_root(gz_bytes: bytes):
+    """Parse a gzipped XML file, resolving entity references manually."""
     xml_bytes = gzip.decompress(gz_bytes)
     parser    = etree.XMLParser(resolve_entities=False)
     tree      = etree.parse(io.BytesIO(xml_bytes), parser)
@@ -127,6 +129,8 @@ def parse_jmdict_root(gz_bytes: bytes):
                 parent.text += ent.tail
     return tree.getroot()
 
+
+# ── JMdict parsing ─────────────────────────────────────────────────────────────
 
 def _process_senses(entry_elem) -> list:
     """Extract and normalise sense elements. Propagates pos across senses per JMdict spec."""
@@ -316,9 +320,94 @@ def build_jmdict_data(root, freq_map: dict):
                     lookup_map[reb].append((written_form, reading, freq, entry_id))
 
     n_refs = sum(len(v) for v in lookup_map.values())
-    print(f"  {len(entries)} core entries | {n_refs} lookup refs")
+    print(f"  {len(entries)} core JMdict entries | {n_refs} lookup refs")
     return entries, lookup_map
 
+
+# ── JMnedict parsing ───────────────────────────────────────────────────────────
+
+def build_jmnedict_data(root, freq_map: dict):
+    """
+    Walk the parsed JMnedict root, grouping all readings and name types
+    by their written form (keb) to produce a single, fully-deduplicated
+    dictionary entry per unique spelling with no romaji/transcriptions.
+    """
+    # Grouping structure: { keb: { 'readings': set(), 'tags': set() } }
+    grouped_data = defaultdict(lambda: {'readings': set(), 'tags': set()})
+
+    for entry_elem in root.iter('entry'):
+        k_eles = [k.find('keb').text for k in entry_elem.findall('k_ele')
+                  if k.find('keb') is not None and k.find('keb').text]
+
+        # Only process entries with a keb (written/kanji representation)
+        if not k_eles:
+            continue
+
+        r_eles = []
+        for r in entry_elem.findall('r_ele'):
+            if r.find('reb') is not None and r.find('reb').text:
+                reb = r.find('reb').text
+                restr = [e.text for e in r.findall('re_restr') if e.text]
+                r_eles.append((reb, restr))
+
+        if not r_eles:
+            continue
+
+        # Extract name classifications
+        name_types = []
+        for trans in entry_elem.findall('trans'):
+            for nt in trans.findall('name_type'):
+                if nt.text:
+                    name_types.append(nt.text.strip('&;'))
+
+        if not name_types:
+            name_types = ['unclass']
+
+        # Group readings and classifications by written form
+        for reb, re_restrs in r_eles:
+            if re_restrs:
+                for keb in k_eles:
+                    if keb in re_restrs:
+                        grouped_data[keb]['readings'].add(reb)
+                        grouped_data[keb]['tags'].update(name_types)
+            else:
+                for keb in k_eles:
+                    grouped_data[keb]['readings'].add(reb)
+                    grouped_data[keb]['tags'].update(name_types)
+
+    entries = {}
+    lookup_map = defaultdict(list)
+
+    # Use synthetic IDs for grouped name entries (starting at 20,000,000)
+    jmnedict_id_counter = count(20_000_000)
+
+    for keb, data in grouped_data.items():
+        entry_id = next(jmnedict_id_counter)
+
+        sorted_readings = sorted(list(data['readings']))
+        sorted_tags = sorted(list(data['tags']))
+
+        # Create a single sense containing all unique readings and tags combined
+        entries[entry_id] = [{
+            'glosses': [', '.join(sorted_readings)],
+            'pos': ['proper noun'],
+            'tags': sorted_tags
+        }]
+
+        # Find best (lowest rank) frequency among the grouped readings
+        best_freq = DEFAULT_FREQ
+        for reb in data['readings']:
+            freq = freq_map.get((keb, reb), DEFAULT_FREQ)
+            if freq < best_freq:
+                best_freq = freq
+
+        # Only insert written form (keb) as index. The reading element in the tuple
+        # is None so that individual readings don't clutter the header.
+        lookup_map[keb].append((keb, None, best_freq, entry_id))
+
+    n_refs = sum(len(v) for v in lookup_map.values())
+    print(f"  {len(entries)} core grouped JMnedict entries | {n_refs} lookup refs")
+    return entries, lookup_map
 
 # ── Kanjidic + IDS ─────────────────────────────────────────────────────────────
 
@@ -505,6 +594,7 @@ def main():
 
     print("\n[1/5] Loading source files ...")
     jmdict_gz   = load_or_download('jmdict_e')
+    jmnedict_gz = load_or_download('jmnedict')
     kanjidic_gz = load_or_download('kanjidic')
     ids_bytes   = load_or_download('ids')
     freq_bytes  = load_or_download('frequency')
@@ -522,8 +612,19 @@ def main():
 
     print("\n[3/5] Parsing JMdict_e ...")
     t0 = time.time()
-    jmdict_root = parse_jmdict_root(jmdict_gz)
+    jmdict_root = parse_gzipped_xml_root(jmdict_gz)
     entries, lookup_map = build_jmdict_data(jmdict_root, freq_map)
+    print(f"  Done in {time.time() - t0:.1f}s")
+
+    print("\n[3.5/5] Parsing JMnedict ...")
+    t0 = time.time()
+    jmnedict_root = parse_gzipped_xml_root(jmnedict_gz)
+    jmnedict_entries, jmnedict_lookup_map = build_jmnedict_data(jmnedict_root, freq_map)
+
+    # Merge JMnedict entries into the main dictionaries
+    entries.update(jmnedict_entries)
+    for key, val_list in jmnedict_lookup_map.items():
+        lookup_map[key].extend(val_list)
     print(f"  Done in {time.time() - t0:.1f}s")
 
     print("\n[4/5] Building kanjidic data ...")

@@ -180,6 +180,27 @@ class Lookup(threading.Thread):
                     if entry_id not in collected:
                         collected[entry_id] = (map_entry, form, prefix_len)
 
+        # ── Pruning shorter proper name matches ──
+        # Find the maximum match length of any proper noun entry in the collected results
+        max_proper_len = 0
+        for entry_id, (map_entry, form, match_len) in collected.items():
+            senses = self.dictionary.entries.get(entry_id, [])
+            is_prop = any('proper noun' in s.get('pos', []) for s in senses)
+            if is_prop and match_len > max_proper_len:
+                max_proper_len = match_len
+
+        # If proper name(s) matched, discard any proper name that is a shorter match length
+        if max_proper_len > 0:
+            pruned_collected = {}
+            for entry_id, (map_entry, form, match_len) in collected.items():
+                senses = self.dictionary.entries.get(entry_id, [])
+                is_prop = any('proper noun' in s.get('pos', []) for s in senses)
+                if is_prop and match_len < max_proper_len:
+                    logger.debug(f"Pruning shorter proper name entry: {entry_id} (len {match_len} < {max_proper_len})")
+                    continue
+                pruned_collected[entry_id] = (map_entry, form, match_len)
+            collected = pruned_collected
+
         return self._format_and_sort(list(collected.values()), text)
 
     def _get_map_entries(self, text: str) -> List[tuple]:
