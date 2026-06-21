@@ -35,7 +35,7 @@ modules:
       - |
         python3 - << 'EOF'
         from PIL import Image
-        img = Image.open("src/meikipop/resources/icon.ico")
+        img = Image.open("src/meikipop/resources/app_icon.ico")
         img.save("icon.png")
         EOF
       - pip3 install --no-index --find-links=. --prefix=/app --no-build-isolation

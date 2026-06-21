@@ -4,7 +4,7 @@ import os
 from PyQt6.QtGui import QIcon, QAction, QActionGroup, QCursor
 from PyQt6.QtWidgets import QSystemTrayIcon, QMenu, QApplication
 
-from meikipop.config.config import APP_NAME, config, IS_WINDOWS
+from meikipop.config.config import APP_NAME, config, IS_WINDOWS, IS_MACOS
 from meikipop.gui.settings_dialog import SettingsDialog
 from meikipop.ocr.ocr import OcrProcessor
 from meikipop.utils.paths import paths
@@ -12,13 +12,21 @@ from meikipop.utils.paths import paths
 
 class TrayIcon(QSystemTrayIcon):
     def __init__(self, screen_manager, ocr_processor: OcrProcessor, popup_window, input_loop, lookup, parent=None):
-        # Resolve icon paths using
-        icon_path = paths.get_resource_path('icon.ico')
-        icon_inactive_path = paths.get_resource_path('icon.inactive.ico')
+        if IS_MACOS:
+            icon_path = paths.get_resource_path('menubar_icon.png')
+            icon_inactive_path = paths.get_resource_path('menubar_icon.inactive.png')
+            icon_is_mask = True
+        else:
+            icon_path = paths.get_resource_path('tray_icon.ico')
+            icon_inactive_path = paths.get_resource_path('tray_icon.inactive.ico')
+            icon_is_mask = False
 
-        if os.path.exists(icon_path):
+        if os.path.exists(icon_path) and os.path.exists(icon_inactive_path):
             self.icon = QIcon(icon_path)
             self.icon_inactive = QIcon(icon_inactive_path)
+            if icon_is_mask:
+                self.icon.setIsMask(True)
+                self.icon_inactive.setIsMask(True)
         else:
             # print(f"Warning: Custom icon not found at '{icon_path}'. Using default.")
             from PyQt6.QtWidgets import QStyle
@@ -115,6 +123,9 @@ class TrayIcon(QSystemTrayIcon):
 
     def on_tray_activated(self, reason):
         """Shows the tray menu when the tray icon is clicked."""
+        if IS_MACOS:
+            return
+
         # QSystemTrayIcon.ActivationReason.Trigger is the enum for a normal left-click.
         if reason == self.ActivationReason.Trigger:
             self.menu.popup(QCursor.pos())

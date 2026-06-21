@@ -39,8 +39,12 @@ a = Analysis(
         ('src/meikipop/ocr/providers/screenai/view_hierarchy_pb2.py', 'meikipop/ocr/providers/screenai'),
         ('src/meikipop/ocr/providers/screenai/__init__.py', 'meikipop/ocr/providers/screenai'),
         ('src/meikipop/ocr/providers/__init__.py', 'meikipop/ocr/providers'),
-        ('src/meikipop/resources/icon.ico', 'meikipop/resources'),
-        ('src/meikipop/resources/icon.inactive.ico', 'meikipop/resources'),
+        ('src/meikipop/resources/app_icon.ico', 'meikipop/resources'),
+        ('src/meikipop/resources/app_icon.icns', 'meikipop/resources'),
+        ('src/meikipop/resources/tray_icon.ico', 'meikipop/resources'),
+        ('src/meikipop/resources/tray_icon.inactive.ico', 'meikipop/resources'),
+        ('src/meikipop/resources/menubar_icon.png', 'meikipop/resources'),
+        ('src/meikipop/resources/menubar_icon.inactive.png', 'meikipop/resources'),
         ('src/meikipop/scripts/deconjugator.json', 'meikipop/scripts'),
     ],
     hiddenimports=['meikipop.ocr.providers.glensv2', 'meikipop.ocr.providers.owocr', 'meikipop.ocr.providers.meikiocr', 'meikipop.ocr.providers.screenai'],
@@ -86,7 +90,7 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='MeikiKai.app',
-    icon='src/meikipop/resources/icon.ico',
+    icon='src/meikipop/resources/app_icon.icns',
     bundle_identifier='dev.hectahertz.meikikai',
     version=BUILD_VERSION,
     info_plist={

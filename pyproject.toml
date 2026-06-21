@@ -44,4 +44,12 @@ where = ["src"]
 include = ["meikipop*"]
 
 [tool.setuptools.package-data]
-meikipop = ["scripts/deconjugator.json", "resources/icon.ico", "resources/icon.inactive.ico"]
+meikipop = [
+    "scripts/deconjugator.json",
+    "resources/app_icon.ico",
+    "resources/app_icon.icns",
+    "resources/tray_icon.ico",
+    "resources/tray_icon.inactive.ico",
+    "resources/menubar_icon.png",
+    "resources/menubar_icon.inactive.png",
+]

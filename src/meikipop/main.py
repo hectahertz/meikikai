@@ -5,10 +5,11 @@ import sys
 import threading
 
 from PyQt6.QtCore import qInstallMessageHandler
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 
 from meikipop.utils.logger import setup_logging
-from meikipop.config.config import config, APP_NAME, APP_VERSION
+from meikipop.config.config import config, APP_NAME, APP_VERSION, IS_MACOS
 from meikipop.dictionary.lookup import Lookup
 from meikipop.gui.input import InputLoop
 from meikipop.gui.popup import Popup
@@ -17,6 +18,7 @@ from meikipop.ocr.hit_scan import HitScanner
 from meikipop.ocr.ocr import OcrProcessor
 from meikipop.screenshot.screenmanager import ScreenManager
 from meikipop.utils.lastest_queue import LatestValueQueue
+from meikipop.utils.paths import paths
 
 
 def qt_message_handler(mode, context, message):
@@ -28,6 +30,22 @@ def qt_message_handler(mode, context, message):
 
 # This global variable will hold the original message handler.
 original_handler = None
+
+
+def set_app_icon(app):
+    icon_path = paths.get_resource_path('app_icon.ico')
+    app.setWindowIcon(QIcon(icon_path))
+
+    if IS_MACOS:
+        try:
+            from AppKit import NSApplication, NSImage
+
+            mac_icon_path = paths.get_resource_path('app_icon.icns')
+            image = NSImage.alloc().initWithContentsOfFile_(mac_icon_path)
+            if image is not None:
+                NSApplication.sharedApplication().setApplicationIconImage_(image)
+        except Exception:
+            pass
 
 
 class SharedState:
@@ -55,6 +73,7 @@ def run_gui():
     app.setApplicationName(APP_NAME)
     app.setApplicationDisplayName(APP_NAME)
     app.setQuitOnLastWindowClosed(False)
+    set_app_icon(app)
 
     input_loop = InputLoop(shared_state)
     popup_window = Popup(shared_state, input_loop)
