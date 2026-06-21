@@ -116,7 +116,7 @@ class SettingsDialog(QDialog):
         self.auto_scan_check = QCheckBox()
         self.auto_scan_check.setChecked(config.auto_scan_mode)
         self.auto_scan_check.setToolTip(
-            "Permanently ocr screen region\nImproves perceived latency, but worsens system load")
+            "Permanently OCR the selected screen\nImproves perceived latency, but worsens system load")
         self.auto_scan_check.toggled.connect(self._update_auto_scan_state)
         auto_layout.addRow("Enable Auto Scan:", self.auto_scan_check)
 

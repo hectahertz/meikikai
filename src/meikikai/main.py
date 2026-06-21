@@ -75,7 +75,7 @@ def run_gui():
     input_loop = InputLoop(shared_state)
     popup_window = Popup(shared_state, input_loop)
 
-    screen_manager = ScreenManager(shared_state, input_loop)  # trigger region selection
+    screen_manager = ScreenManager(shared_state, input_loop)
     lookup = Lookup(shared_state, popup_window)  # load dictionary
 
     ocr_processor = OcrProcessor(shared_state, screen_manager)
@@ -89,7 +89,7 @@ def run_gui():
     --------------------------------------------------
     {APP_NAME}.{APP_VERSION} is running in the background.
 
-      - To configure or change scan area: Right-click the menu bar icon.
+      - To configure or change scan screen: Right-click the menu bar icon.
       - To exit: Press Ctrl+C in this terminal.
 
     --------------------------------------------------

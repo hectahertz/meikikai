@@ -33,7 +33,7 @@ class TrayIcon(QSystemTrayIcon):
         self.popup_window = popup_window
         self.input_loop = input_loop
         self.lookup = lookup
-        self.scan_area_actions = []
+        self.scan_screen_actions = []
 
         self.menu = QMenu()
 
@@ -79,26 +79,21 @@ class TrayIcon(QSystemTrayIcon):
         auto_action.setChecked(config.auto_scan_mode)
         self.scan_mode_action_group.addAction(auto_action)
 
-        # Scan Area Selection
-        scan_area_menu = self.menu.addMenu("Scan Area")
-        self.scan_area_action_group = QActionGroup(self)
-        self.scan_area_action_group.setExclusive(True)
-        self.scan_area_action_group.triggered.connect(self._on_scan_area_selected)
-
-        region_action = scan_area_menu.addAction("Custom Region")
-        region_action.setCheckable(True)
-        region_action.setData('region')
-        self.scan_area_action_group.addAction(region_action)
-        self.scan_area_actions.append(region_action)
+        # Scan Screen Selection
+        scan_screen_menu = self.menu.addMenu("Scan Screen")
+        self.scan_screen_action_group = QActionGroup(self)
+        self.scan_screen_action_group.setExclusive(True)
+        self.scan_screen_action_group.triggered.connect(self._on_scan_screen_selected)
 
         for i, res in enumerate(self.screen_manager.get_screens()):
-            action = scan_area_menu.addAction(f"Screen {i} ({res['width']}x{res['height']})")
+            label = "All Screens" if i == 0 else f"Screen {i}"
+            action = scan_screen_menu.addAction(f"{label} ({res['width']}x{res['height']})")
             action.setCheckable(True)
             action.setData(i)
-            self.scan_area_action_group.addAction(action)
-            self.scan_area_actions.append(action)
+            self.scan_screen_action_group.addAction(action)
+            self.scan_screen_actions.append(action)
 
-        self.update_scan_area_check()
+        self.update_scan_screen_check()
 
         self.menu.addSeparator()
 
@@ -117,16 +112,16 @@ class TrayIcon(QSystemTrayIcon):
         else:
             self.setIcon(self.icon_inactive)
 
-    def update_scan_area_check(self):
-        current_region = config.scan_region
+    def update_scan_screen_check(self):
+        current_screen = config.scan_screen
         action_to_check = None
-        for action in self.scan_area_actions:
-            if str(action.data()) == str(current_region):
+        for action in self.scan_screen_actions:
+            if action.data() == current_screen:
                 action_to_check = action
                 break
 
         if not action_to_check:
-            action_to_check = self.scan_area_actions[0]
+            action_to_check = self.scan_screen_actions[0]
 
         action_to_check.setChecked(True)
 
@@ -136,21 +131,14 @@ class TrayIcon(QSystemTrayIcon):
             config.auto_scan_mode = is_auto
             config.save()
 
-    def _on_scan_area_selected(self, action: QAction):
-        selected_id = action.data()
-        if selected_id == 'region':
-            if self.screen_manager.set_scan_region():
-                if config.scan_region != 'region':
-                    config.scan_region = 'region'
-                    config.save()
-            else:
-                self.update_scan_area_check()
-        else:  # It's a screen index
-            index = int(selected_id)
-            if str(index) != config.scan_region:
-                self.screen_manager.set_scan_screen(index)
-                config.scan_region = str(index)
+    def _on_scan_screen_selected(self, action: QAction):
+        index = int(action.data())
+        if index != config.scan_screen:
+            if self.screen_manager.set_scan_screen(index):
+                config.scan_screen = index
                 config.save()
+            else:
+                self.update_scan_screen_check()
 
     def _on_ocr_provider_selected(self, action):
         provider_name = action.text()

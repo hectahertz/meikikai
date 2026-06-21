@@ -24,7 +24,7 @@ class Config:
     _SCHEMA = {
         'Settings': {
             'hotkey': 'shift',
-            'scan_region': 'region',
+            'scan_screen': 1,
             'max_lookup_length': 25,
             'glens_low_bandwidth': False,
             'ocr_provider': 'meikiocr (local)',

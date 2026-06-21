@@ -26,7 +26,7 @@ your class must have:
   and menu bar menus.
 
 * **scan(self, image: Image.Image) -> Optional[List[Paragraph]]:** this is the core method where all the work happens.
-    * **input:** it receives a `PIL.Image.Image` object of the screen region to be scanned.
+    * **input:** it receives a `PIL.Image.Image` object of the selected screen to be scanned.
     * **output:** it must return:
         * a `List[Paragraph]` if ocr is successful (return an empty list `[]` if no text is found).
         * `None` if a critical error occurred.
