@@ -2,7 +2,7 @@
 
 MeikiKai is a macOS Japanese OCR popup dictionary. Hover Japanese text on screen to see dictionary entries.
 
-<img width="496" alt="MeikiKai popup example" src="https://github.com/user-attachments/assets/39b415d8-2ed9-4a57-8b96-e25c96a87bb1">
+<img width="496" alt="MeikiKai popup example" src="design/meikikai_popup_mockup.png">
 
 Forked from [rtr46/meikipop](https://github.com/rtr46/meikipop).
 
@@ -81,7 +81,7 @@ Imports overwrite `~/Library/Application Support/meikikai/dictionary.pkl`.
 Regenerate the README image with:
 
 ```bash
-.venv/bin/python scripts/render_popup_sample.py mockup -o /tmp/meikikai_popup_mockup.png
+.venv/bin/python scripts/render_popup_sample.py mockup -o design/meikikai_popup_mockup.png
 ```
 
 ## Build the macOS app
