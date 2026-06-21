@@ -23,7 +23,7 @@ from PyQt6.QtWidgets import (
 from meikikai.config.config import config
 from meikikai.dictionary.customdict import DEFAULT_FREQ
 from meikikai.dictionary.lookup import DictionaryEntry, KanjiEntry
-from meikikai.gui.input import toggle_macos_play_pause_key
+from meikikai.gui.input import pause_macos_media, play_macos_media
 
 try:
     import objc
@@ -770,7 +770,11 @@ class Popup(QWidget):
         self._order_macos_window_front()
 
     def _pause_media_for_popup(self):
-        if config.auto_pause_media and toggle_macos_play_pause_key():
+        self._auto_pause_media_triggered = False
+        if not config.auto_pause_media:
+            return
+
+        if pause_macos_media():
             self._auto_pause_media_triggered = True
 
     def _resume_auto_paused_media(self):
@@ -778,7 +782,7 @@ class Popup(QWidget):
             return
 
         try:
-            toggle_macos_play_pause_key()
+            play_macos_media()
         finally:
             self._auto_pause_media_triggered = False
 

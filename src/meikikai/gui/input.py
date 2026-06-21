@@ -1,4 +1,5 @@
 # meikikai/gui/input.py
+import ctypes
 import logging
 import threading
 import time
@@ -22,6 +23,14 @@ NS_SYSTEM_DEFINED = 14
 KEY_DOWN_STATE = 0xA
 KEY_UP_STATE = 0xB
 
+MEDIA_REMOTE_FRAMEWORK_PATH = "/System/Library/PrivateFrameworks/MediaRemote.framework/MediaRemote"
+MR_COMMAND_PLAY = 0
+MR_COMMAND_PAUSE = 1
+
+_MEDIA_REMOTE_UNAVAILABLE = object()
+_media_remote_framework = None
+_media_remote_send_command = None
+
 
 def is_process_trusted_for_accessibility(prompt: bool = False) -> bool:
     """Return whether macOS allows this process to post synthetic input events."""
@@ -43,6 +52,58 @@ def is_process_trusted_for_accessibility(prompt: bool = False) -> bool:
 def request_accessibility_access() -> bool:
     """Ask macOS to prompt for Accessibility access if it is not already granted."""
     return is_process_trusted_for_accessibility(prompt=True)
+
+
+def _load_media_remote_send_command():
+    global _media_remote_framework, _media_remote_send_command
+
+    if _media_remote_send_command is not None:
+        return _media_remote_send_command
+    if _media_remote_framework is _MEDIA_REMOTE_UNAVAILABLE:
+        return None
+
+    try:
+        framework = ctypes.CDLL(MEDIA_REMOTE_FRAMEWORK_PATH)
+        send_command = framework.MRMediaRemoteSendCommand
+        send_command.argtypes = [ctypes.c_int, ctypes.c_void_p]
+        send_command.restype = ctypes.c_bool
+    except OSError as e:
+        logger.warning(f"MediaRemote framework unavailable for explicit media controls: {e}")
+        _media_remote_framework = _MEDIA_REMOTE_UNAVAILABLE
+        return None
+    except AttributeError as e:
+        logger.warning(f"MediaRemote command API unavailable for explicit media controls: {e}")
+        _media_remote_framework = _MEDIA_REMOTE_UNAVAILABLE
+        return None
+
+    _media_remote_framework = framework
+    _media_remote_send_command = send_command
+    return _media_remote_send_command
+
+
+def _send_macos_media_remote_command(command: int, command_name: str) -> bool:
+    send_command = _load_media_remote_send_command()
+    if send_command is None:
+        return False
+
+    try:
+        if not bool(send_command(command, None)):
+            logger.warning(f"MediaRemote rejected explicit {command_name} command.")
+            return False
+        return True
+    except Exception as e:
+        logger.warning(f"Failed to send MediaRemote {command_name} command: {e}")
+        return False
+
+
+def pause_macos_media() -> bool:
+    """Pause macOS media playback with an explicit MediaRemote Pause command."""
+    return _send_macos_media_remote_command(MR_COMMAND_PAUSE, "Pause")
+
+
+def play_macos_media() -> bool:
+    """Start macOS media playback with an explicit MediaRemote Play command."""
+    return _send_macos_media_remote_command(MR_COMMAND_PLAY, "Play")
 
 
 def toggle_macos_play_pause_key() -> bool:
