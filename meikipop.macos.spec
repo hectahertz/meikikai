@@ -58,7 +58,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='meikipop',
+    name='MeikiKai',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -80,16 +80,18 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='meikipop',
+    name='MeikiKai',
 )
 
 app = BUNDLE(
     coll,
-    name='meikipop.app',
+    name='MeikiKai.app',
     icon='src/meikipop/resources/icon.ico',
-    bundle_identifier='io.github.rtr46.meikipop',
+    bundle_identifier='dev.hectahertz.meikikai',
     version=BUILD_VERSION,
     info_plist={
+        'CFBundleName': 'MeikiKai',
+        'CFBundleDisplayName': 'MeikiKai',
         'CFBundleVersion': BUILD_VERSION,
     },
 )

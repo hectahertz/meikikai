@@ -52,6 +52,8 @@ def run_gui():
     original_handler = qInstallMessageHandler(qt_message_handler)
 
     app = QApplication(sys.argv)
+    app.setApplicationName(APP_NAME)
+    app.setApplicationDisplayName(APP_NAME)
     app.setQuitOnLastWindowClosed(False)
 
     input_loop = InputLoop(shared_state)
@@ -95,7 +97,7 @@ def run_gui():
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="meikipop",
+        prog="meikikai",
         description="Universal Japanese OCR popup dictionary"
     )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")

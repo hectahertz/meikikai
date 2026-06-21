@@ -96,7 +96,7 @@ class TrayIcon(QSystemTrayIcon):
 
         self.menu.addSeparator()
 
-        self.enable_action = self.menu.addAction("Pause meikipop")
+        self.enable_action = self.menu.addAction(f"Pause {APP_NAME}")
         self.enable_action.setCheckable(True)
         self.enable_action.triggered.connect(self.toggle_enabled_state)
         self.activated.connect(self.on_tray_activated)

@@ -8,7 +8,7 @@ from meikipop.utils.paths import paths
 
 logger = logging.getLogger(__name__)
 
-APP_NAME = "meikipop"
+APP_NAME = "MeikiKai"
 APP_VERSION = "2.0.4"
 MAX_DICT_ENTRIES = 10
 IS_LINUX = sys.platform.startswith('linux')
