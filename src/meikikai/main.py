@@ -16,7 +16,7 @@ from meikikai.gui.tray import TrayIcon
 from meikikai.ocr.hit_scan import HitScanner
 from meikikai.ocr.ocr import OcrProcessor
 from meikikai.screenshot.screenmanager import ScreenManager
-from meikikai.utils.lastest_queue import LatestValueQueue
+from meikikai.utils.latest_queue import LatestValueQueue
 from meikikai.utils.paths import paths
 
 
