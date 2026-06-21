@@ -5,7 +5,7 @@ from typing import List
 
 from meikikai.ocr.interface import Paragraph
 
-logger = logging.getLogger(__name__)  # Get the logger
+logger = logging.getLogger(__name__)
 
 
 class HitScanner(threading.Thread):
@@ -14,7 +14,6 @@ class HitScanner(threading.Thread):
         self.shared_state = shared_state
         self.input_loop = input_loop
         self.screen_manager = screen_manager
-        self.last_ocr_result = None
 
     def run(self):
         logger.debug("HitScanner thread started.")
@@ -59,8 +58,6 @@ class HitScanner(threading.Thread):
             px, py = point
             return (left <= px <= right) and (top <= py <= bottom)
 
-        hit_scan_result = None
-        lookup_string = None
         for para in paragraphs:
             if not is_in_box((norm_x, norm_y), para.box):
                 continue
@@ -106,17 +103,6 @@ class HitScanner(threading.Thread):
             if final_char_index >= len(full_text):
                 continue
 
-            character = full_text[final_char_index]
-            lookup_string = full_text[final_char_index:]
-            hit_scan_result = (full_text, final_char_index, character,
-                               lookup_string)  # this may be interesting for debugging, but only lookup_string is really relevant
-            break
+            return full_text[final_char_index:]
 
-        if hit_scan_result:
-            text, char_pos, char, lookup_string = hit_scan_result
-        #    truncated_text = (text[:40] + '...') if len(text) > 40 else text
-        #     config.user_log(f"  -> Looking up '{char}' at pos {char_pos} in text: \"{truncated_text}\"")
-        # else:
-        #     config.user_log("hit scan unsuccessful")
-
-        return lookup_string
+        return None

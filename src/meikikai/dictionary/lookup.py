@@ -57,9 +57,6 @@ class Lookup(threading.Thread):
             raise RuntimeError("Failed to load dictionary.")
         self.deconjugator = Deconjugator(self.dictionary.deconjugator_rules)
 
-    def clear_cache(self):
-        self.lookup_cache = OrderedDict()
-
     def run(self):
         logger.debug("Lookup thread started.")
         while self.shared_state.running:

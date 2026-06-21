@@ -8,7 +8,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 
 from meikikai.utils.logger import setup_logging
-from meikikai.config.config import config, APP_NAME, APP_VERSION
+from meikikai.config.config import APP_NAME, APP_VERSION
 from meikikai.dictionary.lookup import Lookup
 from meikikai.gui.input import InputLoop, request_accessibility_access
 from meikikai.gui.popup import Popup
