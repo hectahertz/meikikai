@@ -2,7 +2,7 @@
 
 MeikiKai is a macOS Japanese OCR popup dictionary. Hover Japanese text on screen to see dictionary entries.
 
-![MeikiKai popup example](https://github.com/user-attachments/assets/39b415d8-2ed9-4a57-8b96-e25c96a87bb1)
+<img width="496" alt="MeikiKai popup example" src="https://github.com/user-attachments/assets/39b415d8-2ed9-4a57-8b96-e25c96a87bb1">
 
 Forked from [rtr46/meikipop](https://github.com/rtr46/meikipop).
 
