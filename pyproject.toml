@@ -21,6 +21,7 @@ dependencies = [
     "meikiocr>=0.3.4",
     "pyobjc-framework-Quartz>=10.0",
     "pyobjc-framework-Cocoa>=10.0",
+    "pyobjc-framework-ApplicationServices>=10.0",
     "lxml",
 ]
 classifiers = [

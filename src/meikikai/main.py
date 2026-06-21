@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import QApplication
 from meikikai.utils.logger import setup_logging
 from meikikai.config.config import config, APP_NAME, APP_VERSION
 from meikikai.dictionary.lookup import Lookup
-from meikikai.gui.input import InputLoop
+from meikikai.gui.input import InputLoop, request_accessibility_access
 from meikikai.gui.popup import Popup
 from meikikai.gui.tray import TrayIcon
 from meikikai.ocr.hit_scan import HitScanner
@@ -43,6 +43,14 @@ def request_screen_recording_access():
             return
         if hasattr(Quartz, 'CGRequestScreenCaptureAccess'):
             Quartz.CGRequestScreenCaptureAccess()
+    except Exception:
+        pass
+
+
+def request_input_access():
+    """Ask macOS to validate Accessibility access for media key automation."""
+    try:
+        request_accessibility_access()
     except Exception:
         pass
 
@@ -81,6 +89,7 @@ def run_gui():
     set_app_icon(app)
     set_activation_policy_accessory()
     request_screen_recording_access()
+    request_input_access()
 
     input_loop = InputLoop(shared_state)
     popup_window = Popup(shared_state)
