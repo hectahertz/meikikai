@@ -9,7 +9,7 @@ on:
       tag:
         description: 'Release tag to publish'
         required: true
-        default: 'meikikai-v1.0.0'
+        default: 'meikikai-v1.0.1'
 
 jobs:
   build-macos:
