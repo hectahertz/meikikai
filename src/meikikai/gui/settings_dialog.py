@@ -84,22 +84,6 @@ class SettingsDialog(QDialog):
         self._set_expanding(self.hotkey_combo)
         core_layout.addRow("Hotkey:", self.hotkey_combo)
 
-        self.ocr_provider_combo = QComboBox()
-        self.ocr_provider_combo.addItems(self.ocr_processor.available_providers.keys())
-        self.ocr_provider_combo.setCurrentText(config.ocr_provider)
-        self.ocr_provider_combo.currentTextChanged.connect(self._update_glens_state)
-        self._set_expanding(self.ocr_provider_combo)
-        core_layout.addRow("OCR Provider:", self.ocr_provider_combo)
-
-        # Google Lens specific option
-        self.glens_compression_check_label = QLabel("Google Lens Compression:")
-        self.glens_compression_check = QCheckBox()
-        self.glens_compression_check.setChecked(config.glens_low_bandwidth)
-        self.glens_compression_check.setToolTip(
-            "Compresses screenshots before sending them to Google Lens\nSignificantly improves ocr latency on slow internet connections, but slightly worsens ocr accuracy and system load"
-        )
-        core_layout.addRow(self.glens_compression_check_label, self.glens_compression_check)
-
         self.max_lookup_spin = QSpinBox()
         self.max_lookup_spin.setRange(5, 100)
         self.max_lookup_spin.setValue(config.max_lookup_length)
@@ -333,7 +317,6 @@ class SettingsDialog(QDialog):
         # Initialize UI States
         self._update_color_buttons()
         self._update_auto_scan_state(self.auto_scan_check.isChecked())
-        self._update_glens_state(self.ocr_provider_combo.currentText())
         self._update_kanji_options_state(self.show_kanji_check.isChecked())
 
     def _set_expanding(self, widget):
@@ -375,12 +358,6 @@ class SettingsDialog(QDialog):
         self.auto_scan_no_hotkey_check_label.setEnabled(is_checked)
         self.auto_scan_mouse_move_check_label.setEnabled(is_checked)
 
-    def _update_glens_state(self, current_provider):
-        """Grays out Google Lens options if another provider is selected."""
-        is_glens = "Google Lens (remote)" in current_provider
-        self.glens_compression_check.setEnabled(is_glens)
-        self.glens_compression_check_label.setEnabled(is_glens)
-
     def _update_kanji_options_state(self, is_checked):
         """Enables/Disables kanji specific sub-options."""
         self.show_examples_check.setEnabled(is_checked)
@@ -415,14 +392,7 @@ class SettingsDialog(QDialog):
             self._mark_as_custom()
 
     def save_and_accept(self):
-        # Update OCR Provider
-        selected_provider = self.ocr_provider_combo.currentText()
-        if selected_provider != config.ocr_provider:
-            self.ocr_processor.switch_provider(selected_provider)
-
-        # Update all other config values
         config.hotkey = self.hotkey_combo.currentText()
-        config.glens_low_bandwidth = self.glens_compression_check.isChecked()
         config.max_lookup_length = self.max_lookup_spin.value()
         config.auto_scan_mode = self.auto_scan_check.isChecked()
         config.auto_scan_interval_seconds = self.auto_scan_interval_spin.value()

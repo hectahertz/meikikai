@@ -78,7 +78,7 @@ def run_gui():
     screen_manager = ScreenManager(shared_state, input_loop)
     lookup = Lookup(shared_state, popup_window)  # load dictionary
 
-    ocr_processor = OcrProcessor(shared_state, screen_manager)
+    ocr_processor = OcrProcessor(shared_state)
     hit_scanner = HitScanner(shared_state, input_loop, screen_manager)
     tray_icon = TrayIcon(screen_manager, ocr_processor, popup_window, input_loop, lookup)
 

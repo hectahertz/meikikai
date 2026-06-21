@@ -33,12 +33,7 @@ class Paragraph:
 
 
 class OcrProvider(abc.ABC):
-    """
-    Abstract base class for an OCR provider.
-
-    Any class that implements this interface can be used by the application's
-    OcrProcessor. This allows for easily swapping out different OCR backends.
-    """
+    """Abstract base class for MeikiKai's OCR backend."""
 
     @property
     @abc.abstractmethod

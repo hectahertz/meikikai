@@ -21,7 +21,7 @@ MeikiKai renames the app, Python package, CLI, support files, and build artifact
 - **Display selection:** OCR a full display or all displays.
 - **Auto and manual scan modes:** keep OCR results warm in the background, or scan only when pressing the hotkey.
 - **Hover popup:** dictionary entries appear next to the cursor, with configurable positioning including a visual-novel-friendly mode.
-- **Local and remote OCR providers:** use fast local `meikiocr`, Google Lens, or a local `owocr` websocket server.
+- **Local OCR:** uses fast local `meikiocr` for Japanese text recognition.
 - **JMdict/KANJIDIC dictionary:** includes word lookup, deconjugation, frequency ranking, kanji entries, components, and examples.
 - **Yomitan imports:** replace the bundled dictionary with one or more Yomitan/Yomichan dictionaries.
 - **Customizable appearance:** themes, colors, opacity, font, compact mode, visible fields, and kanji display options.
@@ -65,34 +65,13 @@ meikikai
 1. Start MeikiKai with `MeikiKai.app` or `meikikai`.
 2. Move the mouse over Japanese text on the selected screen.
 3. Hold the configured hotkey when required. The default hotkey is `shift`.
-4. Right-click the menu bar icon to enable/pause MeikiKai, open settings, change OCR provider, switch scan mode, choose scan screen, or quit.
+4. Right-click the menu bar icon to enable/pause MeikiKai, open settings, switch scan mode, choose scan screen, or quit.
 
 In auto scan mode, MeikiKai can show lookups without holding the hotkey if **Show Popup without Hotkey** is enabled.
 
-## OCR providers
+## OCR
 
-### meikiocr (local)
-
-Fast local OCR, especially useful for horizontal Japanese game text. Models are handled by the `meikiocr` package. This is the default configured provider.
-
-### Google Lens (remote)
-
-High-accuracy remote OCR. It requires an internet connection and sends screenshots of the selected screen to Google Lens. Enable Google Lens compression if latency is high on a slow connection.
-
-### owocr (Websocket)
-
-Use any OCR engine supported by [owocr](https://github.com/AuroraWright/owocr/tree/master/owocr) through a local websocket server.
-
-```bash
-pip install -U "owocr>=1.15"
-owocr -r websocket -w websocket -of json -e glens
-```
-
-Then choose **owocr (Websocket)** from the menu bar OCR provider menu or settings dialog.
-
-### Custom providers
-
-Custom OCR providers can be added when running from source. See [docs/CUSTOM_OCR_PROVIDER.md](docs/CUSTOM_OCR_PROVIDER.md).
+MeikiKai uses local `meikiocr` for Japanese text recognition. It is optimized for Japanese game text, and the `meikiocr` package handles its models.
 
 ## Dictionary commands
 
@@ -122,7 +101,6 @@ Imports overwrite `~/Library/Application Support/meikikai/dictionary.pkl`.
 Open settings from the menu bar icon. Useful options include:
 
 - hotkey and maximum lookup length
-- OCR provider and Google Lens compression
 - auto scan mode, scan interval, scan-on-mouse-move, and hotkeyless lookup
 - popup position mode, compact mode, and media auto-pause
 - visible dictionary fields: glosses, deconjugation, part of speech, tags, frequency, kanji entries, examples, and components

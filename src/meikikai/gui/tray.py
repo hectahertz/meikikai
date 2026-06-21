@@ -57,21 +57,6 @@ class TrayIcon(QSystemTrayIcon):
 
         self.menu.addSeparator()
 
-        # OCR Provider Selection
-        ocr_menu = self.menu.addMenu("OCR Provider")
-        self.ocr_action_group = QActionGroup(self)
-        self.ocr_action_group.setExclusive(True)
-        self.ocr_action_group.triggered.connect(self._on_ocr_provider_selected)
-
-        for provider_name in self.ocr_processor.available_providers.keys():
-            action = ocr_menu.addAction(provider_name)
-            action.setCheckable(True)
-            if provider_name == config.ocr_provider:
-                action.setChecked(True)
-            self.ocr_action_group.addAction(action)
-
-        self.menu.addSeparator()
-
         # Scan Mode Selection
         scan_mode_menu = self.menu.addMenu("Scan Mode")
         self.scan_mode_action_group = QActionGroup(self)
@@ -154,19 +139,9 @@ class TrayIcon(QSystemTrayIcon):
             else:
                 self.update_scan_screen_check()
 
-    def _on_ocr_provider_selected(self, action):
-        provider_name = action.text()
-        if provider_name != config.ocr_provider:
-            self.ocr_processor.switch_provider(provider_name)
-
     def reapply_settings(self):
         """Updates the tray menu's checkmarks to reflect the current config."""
         self.auto_pause_media_action.setChecked(config.auto_pause_media)
-
-        for action in self.ocr_action_group.actions():
-            if action.text() == config.ocr_provider:
-                action.setChecked(True)
-                break
 
         for action in self.scan_mode_action_group.actions():
             is_auto_action = action.text() == "Auto"
