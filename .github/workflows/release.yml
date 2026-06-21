@@ -7,17 +7,11 @@ on:
       - 'v*'
 
 jobs:
-  build-windows:
-    uses: ./.github/workflows/build-windows.yml
-  build-linux:
-    uses: ./.github/workflows/build-linux.yml
-  build-flatpak:
-    uses: ./.github/workflows/build-flatpak.yml
   build-macos:
     uses: ./.github/workflows/build-macos.yml
 
   release:
-    needs: [ build-windows, build-linux, build-flatpak, build-macos ]
+    needs: [ build-macos ]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -34,7 +28,4 @@ jobs:
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, '-rc') }}
           files: |
-            artifacts/*/*.zip
-            artifacts/*/*.tar.gz
             artifacts/*/*.dmg
-            artifacts/*/*.flatpak

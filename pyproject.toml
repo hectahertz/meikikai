@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "meikipop"
 version = "2.0.4"
-description = "Universal Japanese OCR popup dictionary"
+description = "Japanese OCR popup dictionary for macOS"
 readme = "README.md"
 license = "GPL-3.0"
 authors = [
@@ -22,13 +22,12 @@ dependencies = [
     "protobuf>=6.33.1",
     "websockets>=15.0.1",
     "meikiocr>=0.3.4",
-    "onnxruntime==1.20.1; sys_platform == 'win32'",
-    "keyboard~=0.13.5; sys_platform == 'win32'",
-    "python-xlib~=0.33; sys_platform == 'linux'",
-    "pyobjc-framework-Quartz>=10.0; sys_platform == 'darwin'",
-    "pyobjc-framework-Cocoa>=10.0; sys_platform == 'darwin'",
+    "pyobjc-framework-Quartz>=10.0",
+    "pyobjc-framework-Cocoa>=10.0",
     "lxml",
-    "platformdirs",
+]
+classifiers = [
+    "Operating System :: MacOS :: MacOS X",
 ]
 
 [project.scripts]
@@ -46,10 +45,7 @@ include = ["meikipop*"]
 [tool.setuptools.package-data]
 meikipop = [
     "scripts/deconjugator.json",
-    "resources/app_icon.ico",
     "resources/app_icon.icns",
-    "resources/tray_icon.ico",
-    "resources/tray_icon.inactive.ico",
     "resources/menubar_icon.png",
     "resources/menubar_icon.inactive.png",
 ]

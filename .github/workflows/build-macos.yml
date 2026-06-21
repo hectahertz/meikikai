@@ -38,7 +38,7 @@ jobs:
         run: |
           rm -rf dist/dmg-root
           mkdir -p dist/dmg-root
-          cp -R dist/meikipop.app dist/dmg-root/
+          cp -R dist/MeikiKai.app dist/dmg-root/
           ln -s /Applications dist/dmg-root/Applications
           hdiutil create \
             -volname "meikipop" \

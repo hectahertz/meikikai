@@ -1,4 +1,4 @@
-"""meikipop - Universal Japanese OCR popup dictionary"""
+"""meikipop - Japanese OCR popup dictionary for macOS"""
 
 __version__ = "2.0.4"
 __author__ = "rtr46"

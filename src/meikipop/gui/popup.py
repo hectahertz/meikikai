@@ -8,17 +8,15 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QCursor, QFont, QFontMetrics, QFontInfo
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QFrame, QApplication
 
-from meikipop.config.config import config, IS_MACOS
+from meikipop.config.config import config
 from meikipop.dictionary.lookup import DictionaryEntry, KanjiEntry
 from meikipop.gui.input import toggle_macos_play_pause_key
-from meikipop.gui.magpie_manager import magpie_manager
 
-# macOS-specific imports for focus management
-if IS_MACOS:
-    try:
-        import Quartz
-    except ImportError:
-        Quartz = None
+try:
+    from AppKit import NSApplicationActivateAllWindows, NSWorkspace
+except ImportError:
+    NSApplicationActivateAllWindows = None
+    NSWorkspace = None
 
 logger = logging.getLogger(__name__)
 
@@ -331,9 +329,6 @@ class Popup(QWidget):
         popup_size = self.size()
         offset = 15
 
-        ratio = screen.devicePixelRatio()
-        x, y = magpie_manager.transform_raw_to_visual((int(x), int(y)), ratio)
-
         # --- Positioning logic based on mode ---
         mode = config.popup_position_mode
 
@@ -439,8 +434,7 @@ class Popup(QWidget):
         self._pause_media_for_popup()
         self.is_visible = True
         self.show()
-        if IS_MACOS:
-            self.raise_()
+        self.raise_()
 
     def _pause_media_for_popup(self):
         if config.auto_pause_media and toggle_macos_play_pause_key():
@@ -463,31 +457,26 @@ class Popup(QWidget):
         self.is_calibrated = False
 
     def _store_active_window_on_mac(self):
-        """Store the currently active window for focus restoration (macOS only)."""
-        if not IS_MACOS or not Quartz:
+        """Store the currently active application for focus restoration."""
+        if not NSWorkspace:
             return
 
         try:
-            # Get the currently active application
-            active_app = Quartz.NSWorkspace.sharedWorkspace().frontmostApplication()
+            active_app = NSWorkspace.sharedWorkspace().frontmostApplication()
             if active_app:
-                # Store the application reference instead of trying to get the window
-                # We'll use the application to restore focus later
                 self._previous_active_window_on_mac = active_app
         except Exception as e:
             logger.warning(f"Failed to store active window: {e}")
             self._previous_active_window_on_mac = None
 
     def _restore_focus_on_mac(self):
-        """Restore focus to the previously active application (macOS only)."""
-        if not IS_MACOS or not Quartz or not self._previous_active_window_on_mac:
+        """Restore focus to the previously active application."""
+        if not NSApplicationActivateAllWindows or not self._previous_active_window_on_mac:
             return
 
         try:
-            # Activate the previously active application
-            self._previous_active_window_on_mac.activateWithOptions_(Quartz.NSApplicationActivateAllWindows)
+            self._previous_active_window_on_mac.activateWithOptions_(NSApplicationActivateAllWindows)
         except Exception as e:
             logger.warning(f"Failed to restore focus: {e}")
         finally:
-            # Clear the stored application reference
             self._previous_active_window_on_mac = None

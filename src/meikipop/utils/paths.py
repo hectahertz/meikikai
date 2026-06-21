@@ -1,54 +1,56 @@
 import os
 import sys
-from platformdirs import PlatformDirs
+from pathlib import Path
 
 
 class MeikiPaths:
-    """Centralized path resolution for meikipop."""
-    
+    """Centralized macOS path resolution for meikipop."""
+
     _instance = None
-    
+
     def __new__(cls):
         if cls._instance is None:
-            # Create the platformdirs instance as a composited object
             cls._instance = object.__new__(cls)
-            cls._instance._platform_dirs = PlatformDirs("meikipop", appauthor=False, ensure_exists=True)
+            cls._instance._app_support_dir = Path.home() / "Library" / "Application Support" / "meikipop"
+            cls._instance._cache_dir = Path.home() / "Library" / "Caches" / "meikipop"
+            cls._instance._app_support_dir.mkdir(parents=True, exist_ok=True)
+            cls._instance._cache_dir.mkdir(parents=True, exist_ok=True)
         return cls._instance
 
     @property
     def is_frozen(self):
-        """Check if running as PyInstaller bundle"""
+        """Check if running as PyInstaller bundle."""
         return getattr(sys, 'frozen', False)
 
     @property
     def data_dir(self):
-        """Location of dictionary.pkl"""
-        return self._platform_dirs.user_data_dir
-    
+        """Location of dictionary.pkl."""
+        return str(self._app_support_dir)
+
     @property
     def config_path(self):
-        """Full path to config.ini"""
-        return os.path.join(self._platform_dirs.user_config_dir, 'config.ini')
-    
+        """Full path to config.ini."""
+        return str(self._app_support_dir / 'config.ini')
+
     @property
     def dictionary_path(self):
-        """Location of dictionary.pkl"""
-        return os.path.join(self.data_dir, 'dictionary.pkl')
-    
+        """Location of dictionary.pkl."""
+        return str(self._app_support_dir / 'dictionary.pkl')
+
     @property
     def cache_dir(self):
-        """Location for cached downloads"""
-        return self._platform_dirs.user_cache_dir
-    
+        """Location for cached downloads."""
+        return str(self._cache_dir)
+
     @property
     def main_dir(self):
-        """Location of bundled resources (icons, etc.)"""
+        """Location of bundled resources (icons, etc.)."""
         if self.is_frozen:
             return os.path.join(sys._MEIPASS, 'meikipop')
         return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    
+
     def get_resource_path(self, relative_path):
-        """Get full path to a bundled resource"""
+        """Get full path to a bundled resource."""
         return os.path.join(self.main_dir, 'resources', relative_path)
 
 

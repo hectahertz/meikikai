@@ -23,7 +23,7 @@ with the rest of the application.
 your class must have:
 
 * **NAME:** a unique, user-friendly string for your provider (e.g., `"My Cool OCR"`). this name is shown in the settings
-  and tray icon menus.
+  and menu bar menus.
 
 * **scan(self, image: Image.Image) -> Optional[List[Paragraph]]:** this is the core method where all the work happens.
     * **input:** it receives a `PIL.Image.Image` object of the screen region to be scanned.
@@ -73,7 +73,7 @@ meiki_box = BoundingBox(center_x, center_y, width, height)
 once your provider is implemented:
 
 1. run meikipop.
-2. right-click the tray icon.
+2. right-click the menu bar icon.
 3. go to ocr provider.
 4. select the NAME of your new provider from the list.
 

@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (QWidget, QDialog, QFormLayout, QComboBox,
                              QTabWidget, QSizePolicy, QFontComboBox)
 
 from meikipop.dictionary.lookup import Lookup
-from meikipop.config.config import config, APP_NAME, IS_WINDOWS
+from meikipop.config.config import config, APP_NAME
 from meikipop.gui.input import InputLoop
 from meikipop.gui.popup import Popup
 from meikipop.ocr.ocr import OcrProcessor
@@ -49,7 +49,7 @@ class SettingsDialog(QDialog):
         self.lookup = lookup
 
         self.setWindowTitle(f"{APP_NAME} Settings")
-        self.setWindowIcon(QIcon(paths.get_resource_path('app_icon.ico')))
+        self.setWindowIcon(QIcon(paths.get_resource_path('app_icon.icns')))
         self.setMinimumWidth(400)
 
         # Keep track of all form layouts to unify their spacing later
@@ -73,7 +73,13 @@ class SettingsDialog(QDialog):
         self.form_layouts.append(core_layout)
 
         self.hotkey_combo = QComboBox()
-        self.hotkey_combo.addItems(['ctrl', 'shift', 'alt', 'ctrl+shift', 'ctrl+alt', 'shift+alt', 'ctrl+shift+alt'])
+        self.hotkey_combo.addItems([
+            'ctrl', 'shift', 'alt', 'cmd',
+            'ctrl+shift', 'ctrl+alt', 'shift+alt',
+            'cmd+shift', 'cmd+alt', 'cmd+ctrl',
+            'ctrl+shift+alt', 'cmd+ctrl+shift', 'cmd+ctrl+alt', 'cmd+shift+alt',
+            'cmd+ctrl+shift+alt'
+        ])
         self.hotkey_combo.setCurrentText(config.hotkey)
         self._set_expanding(self.hotkey_combo)
         core_layout.addRow("Hotkey:", self.hotkey_combo)
@@ -98,12 +104,6 @@ class SettingsDialog(QDialog):
         self.max_lookup_spin.setRange(5, 100)
         self.max_lookup_spin.setValue(config.max_lookup_length)
         core_layout.addRow("Max Lookup Length:", self.max_lookup_spin)
-
-        if IS_WINDOWS:
-            self.magpie_check = QCheckBox()
-            self.magpie_check.setChecked(config.magpie_compatibility)
-            self.magpie_check.setToolTip("Enable transformations for compatibility with Magpie game scaler.")
-            core_layout.addRow("Magpie Compatibility:", self.magpie_check)
 
         core_group.setLayout(core_layout)
         self.tab_general_layout.addWidget(core_group)
@@ -436,8 +436,6 @@ class SettingsDialog(QDialog):
         config.auto_scan_mode_lookups_without_hotkey = self.auto_scan_no_hotkey_check.isChecked()
         config.auto_scan_on_mouse_move = self.auto_scan_mouse_move_check.isChecked()
 
-        if IS_WINDOWS:
-            config.magpie_compatibility = self.magpie_check.isChecked()
         config.compact_mode = self.compact_check.isChecked()
         config.auto_pause_media = self.auto_pause_media_check.isChecked()
         config.show_all_glosses = self.show_glosses_check.isChecked()

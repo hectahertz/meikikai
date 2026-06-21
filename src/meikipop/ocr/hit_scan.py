@@ -3,7 +3,6 @@ import logging
 import threading
 from typing import List
 
-from meikipop.gui.magpie_manager import magpie_manager
 from meikipop.ocr.interface import Paragraph
 
 logger = logging.getLogger(__name__)  # Get the logger
@@ -34,7 +33,7 @@ class HitScanner(threading.Thread):
         if not paragraphs:
             return None
 
-        mouse_x, mouse_y = magpie_manager.transform_raw_to_visual(self.input_loop.get_mouse_pos(), 1)
+        mouse_x, mouse_y = self.input_loop.get_mouse_pos()
         mouse_off_x, mouse_off_y, img_w, img_h = self.screen_manager.get_scan_geometry()
         relative_x = mouse_x - mouse_off_x
         relative_y = mouse_y - mouse_off_y

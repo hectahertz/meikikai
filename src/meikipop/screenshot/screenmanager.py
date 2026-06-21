@@ -3,19 +3,13 @@ import logging
 import threading
 import time
 
+import mss
 from PIL import Image
 
-from meikipop.config.config import config, IS_WAYLAND
+from meikipop.config.config import config
 from meikipop.gui.region_selector import RegionSelector
 
-if IS_WAYLAND:
-    from . import wayland_mss_shim
-
-    mss = wayland_mss_shim.MSSModuleShim()
-else:
-    import mss
-
-logger = logging.getLogger(__name__)  # Get the logger
+logger = logging.getLogger(__name__)
 
 
 # todo doesnt work when monitors change

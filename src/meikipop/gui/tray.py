@@ -1,10 +1,10 @@
 # meikipop/gui/tray.py
 import os
 
-from PyQt6.QtGui import QIcon, QAction, QActionGroup, QCursor
+from PyQt6.QtGui import QIcon, QAction, QActionGroup
 from PyQt6.QtWidgets import QSystemTrayIcon, QMenu, QApplication
 
-from meikipop.config.config import APP_NAME, config, IS_WINDOWS, IS_MACOS
+from meikipop.config.config import APP_NAME, config
 from meikipop.gui.settings_dialog import SettingsDialog
 from meikipop.ocr.ocr import OcrProcessor
 from meikipop.utils.paths import paths
@@ -12,23 +12,15 @@ from meikipop.utils.paths import paths
 
 class TrayIcon(QSystemTrayIcon):
     def __init__(self, screen_manager, ocr_processor: OcrProcessor, popup_window, input_loop, lookup, parent=None):
-        if IS_MACOS:
-            icon_path = paths.get_resource_path('menubar_icon.png')
-            icon_inactive_path = paths.get_resource_path('menubar_icon.inactive.png')
-            icon_is_mask = True
-        else:
-            icon_path = paths.get_resource_path('tray_icon.ico')
-            icon_inactive_path = paths.get_resource_path('tray_icon.inactive.ico')
-            icon_is_mask = False
+        icon_path = paths.get_resource_path('menubar_icon.png')
+        icon_inactive_path = paths.get_resource_path('menubar_icon.inactive.png')
 
         if os.path.exists(icon_path) and os.path.exists(icon_inactive_path):
             self.icon = QIcon(icon_path)
             self.icon_inactive = QIcon(icon_inactive_path)
-            if icon_is_mask:
-                self.icon.setIsMask(True)
-                self.icon_inactive.setIsMask(True)
+            self.icon.setIsMask(True)
+            self.icon_inactive.setIsMask(True)
         else:
-            # print(f"Warning: Custom icon not found at '{icon_path}'. Using default.")
             from PyQt6.QtWidgets import QStyle
             self.icon = QIcon(QApplication.style().standardIcon(
                 QStyle.StandardPixmap.SP_ComputerIcon
@@ -49,11 +41,9 @@ class TrayIcon(QSystemTrayIcon):
         self.enable_action.setCheckable(True)
         self.enable_action.triggered.connect(self.set_enabled_state)
         self.set_enabled_state(config.is_enabled)
-        self.activated.connect(self.on_tray_activated)
 
         self.menu.addSeparator()
 
-        # Settings Action
         self.menu.addAction("Settings").triggered.connect(self.show_settings)
 
         self.menu.addSeparator()
@@ -116,29 +106,15 @@ class TrayIcon(QSystemTrayIcon):
 
         self.setContextMenu(self.menu)
         self.setToolTip(APP_NAME)
-
-        self.prevent_ghost_icon_on_win()
-
         self.show()
-
-    def on_tray_activated(self, reason):
-        """Shows the tray menu when the tray icon is clicked."""
-        if IS_MACOS:
-            return
-
-        # QSystemTrayIcon.ActivationReason.Trigger is the enum for a normal left-click.
-        if reason == self.ActivationReason.Trigger:
-            self.menu.popup(QCursor.pos())
 
     def set_enabled_state(self, enabled):
         """Sets the enabled/paused state of the application."""
         config.is_enabled = enabled
         self.enable_action.setChecked(enabled)
         if enabled:
-            # App is active/unpaused
             self.setIcon(self.icon)
         else:
-            # App is inactive/paused
             self.setIcon(self.icon_inactive)
 
     def update_scan_area_check(self):
@@ -150,7 +126,6 @@ class TrayIcon(QSystemTrayIcon):
                 break
 
         if not action_to_check:
-            # If no specific match is found, default to checking the 'Custom Region' action.
             action_to_check = self.scan_area_actions[0]
 
         action_to_check.setChecked(True)
@@ -184,13 +159,11 @@ class TrayIcon(QSystemTrayIcon):
 
     def reapply_settings(self):
         """Updates the tray menu's checkmarks to reflect the current config."""
-        # Update OCR Provider selection
         for action in self.ocr_action_group.actions():
             if action.text() == config.ocr_provider:
                 action.setChecked(True)
                 break
 
-        # Update Scan Mode selection
         for action in self.scan_mode_action_group.actions():
             is_auto_action = action.text() == "Auto"
             if is_auto_action == config.auto_scan_mode:
@@ -200,21 +173,3 @@ class TrayIcon(QSystemTrayIcon):
     def show_settings(self):
         settings_dialog = SettingsDialog(self.ocr_processor, self.popup_window, self.input_loop, self.lookup, self)
         settings_dialog.exec()
-
-    def prevent_ghost_icon_on_win(self):
-        if IS_WINDOWS:
-            import ctypes
-            from ctypes import wintypes
-            def win_console_handler(ctrl_type):
-                # 2 = CTRL_CLOSE_EVENT (Closing the console window)
-                if ctrl_type == 2:
-                    try:
-                        self.hide()
-                    except:
-                        pass
-                    return False
-                return False
-
-            HandlerRoutine = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.DWORD)
-            self._win_handler_ref = HandlerRoutine(win_console_handler)
-            ctypes.windll.kernel32.SetConsoleCtrlHandler(self._win_handler_ref, True)

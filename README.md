@@ -1,6 +1,6 @@
-# meikipop - universal japanese ocr popup dictionary
+# meikipop - japanese ocr popup dictionary for macos
 
-instantly look up japanese words anywhere on your screen. meikipop uses optical character recognition (ocr) to read text from websites, games, scanned manga, or even hard-coded video subtitles, giving you effortless dictionary lookups with the press of a key (or even without)!
+instantly look up japanese words anywhere on your mac. meikipop uses optical character recognition (ocr) to read text from websites, games, scanned manga, or even hard-coded video subtitles, giving you effortless dictionary lookups with the press of a key (or even without)!
 
 https://github.com/user-attachments/assets/a1834197-3059-438c-a2dc-716e8ec9078f
 
@@ -60,37 +60,14 @@ meikipop  # run the application
 
 ### platform support
 
-* **windows, linux (x11)** - these are the primary supported platforms
-* **macos** - supported thanks to community contributions
-* **linux (wayland)** - it can work in principle thanks to community contributions, but may require additional trouble shooting
+meikipop is macOS-only.
 
-see for platform specific setup details:
-<details>
-<summary>macos</summary>
+macOS permissions required on first run:
 
-* go to **System Preferences** > **Security & Privacy** > **Privacy**
-* add/enable your terminal app in **Input Monitoring**, **Screen Recording** and **Accessibility**
+* go to **System Settings** > **Privacy & Security**
+* add/enable your terminal app or MeikiKai in **Input Monitoring**, **Screen Recording** and **Accessibility**
 
 note that there may be problems when using python 3.14. use one of [these workarounds](https://github.com/rtr46/meikipop/issues/43) if necessary.
-</details>
-
-<details>
-<summary>wayland (alpha)</summary>
-
-it is possible to run meikipop on wayland in principle, but depending on your specific setup you may need to take additional steps like installing additional dependencies, fixing some of the wayland specific code or changing some of your setup. since the wayland eco system is terribly fragmented and deliberately prevents apps like meikipop from working natively, don't expect any support, but feel free to open an issue regardless.
-
-here are some tips and recommendations:
-* consider switching to x11
-* the easiest and most compatible way is trying to run the flatpak distribution of meikipop first, before trying any of the other tips 
-* if the flatpak does not work for you, install via pypi or create an editable install and avoid the linux prebuilt, which only got tested on x11
-* make sure you have xwayland working
-* you may need to install additional python dependencies, depending on your system like `pip install pygobject`
-* you may need to install additional os dependencies, depending on your distribution like:
-  * fedora: `sudo dnf install libxcb xcb-util xcb-util-cursor libxkbcommon-x11 libxkbcommon xcb-util-wm xcb-util-keysyms pipewire-gstreamer`
-  * ubuntu: `sudo apt install cmake libcairo2-dev libgirepository-2.0-dev libgstreamer1.0-dev gstreamer1.0-pipewire libxcb-xkb-dev libxcb-cursor-dev libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1-dev libxcb-shape0`
-* if meikipop is running, but doesn't show any popups, make sure to test lookups on a windowed xwayland application like steam
-* ask your favorite llm for help
-</details>
 
 ## how to use
 
@@ -98,29 +75,25 @@ here are some tips and recommendations:
 2.  the first time you run the app in `region` mode, you will be prompted to select an area of your screen to scan.
 3.  move your mouse over any japanese text on your screen.
 4.  a popup with dictionary entries will appear.
-5.  **right-click the system tray icon** to open the settings, reselect the scan region, change the ocr provider or quit the application.
+5.  **right-click the menu bar icon** to open the settings, reselect the scan region, change the ocr provider or quit the application.
 
 ## configuration
 
-you can fully customize meikipop's behavior and appearance. right-click the tray icon and choose "settings" to open the configuration gui.
+you can fully customize meikipop's behavior and appearance. right-click the menu bar icon and choose "settings" to open the configuration gui.
 
-changes are saved to a platform-specific user data directory which contains `config.ini` and `dictionary.pkl`:
-- windows: `%LOCALAPPDATA%\meikipop\`
-- linux: `~/.config/meikipop/`
-- macos: `~/Library/Application Support/meikipop/`
+changes are saved to `~/Library/Application Support/meikipop/`, which contains `config.ini` and `dictionary.pkl`.
 
 ## using alternative ocr backends...
 
 meikipop's architecture allows you to choose whatever ocr suits your use case best:
 - meikiocr (default/local): possibly the fastest local ocr worth using on cpu and can run even faster on nvidia gpus. primarily designed for video games with horizontal text. poor accuracy for vertical text.
 - google lens (remote): high accuracy, but requires an internet connection and has higher latency then the local options.
-- chrome screen ai (local): alternative local ocr worth checking out if meikiocr does not fit your use case. requires additional setup ([instructions](https://github.com/rtr46/meikipop/releases/tag/v1.10.0))
 - owocr: owocr lets you choose from even more ocr backends (see below)
 - custom ocr provider: if you are running from source it is very simple to integrate any ocr provider on your own (see below) 
 
 ### ...via owocr provider
 
-owocr lets you run any relevant ocr engine and lets meikipop use it. just run a local [owocr](https://github.com/AuroraWright/owocr/tree/master/owocr) instance and select the owocr ocr provider from meikipop's system tray menu.
+owocr lets you run any relevant ocr engine and lets meikipop use it. just run a local [owocr](https://github.com/AuroraWright/owocr/tree/master/owocr) instance and select the owocr ocr provider from meikipop's menu bar menu.
 
 make sure you:
 
