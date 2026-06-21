@@ -37,6 +37,14 @@ class TrayIcon(QSystemTrayIcon):
 
         self.menu = QMenu()
 
+        self.enable_action = self.menu.addAction(f"{APP_NAME} Enabled")
+        self.enable_action.setCheckable(True)
+        self.enable_action.triggered.connect(self.set_enabled_state)
+        self.set_enabled_state(config.is_enabled)
+        self.activated.connect(self.on_tray_activated)
+
+        self.menu.addSeparator()
+
         # Settings Action
         self.menu.addAction("Settings").triggered.connect(self.show_settings)
 
@@ -93,14 +101,6 @@ class TrayIcon(QSystemTrayIcon):
             self.scan_area_actions.append(action)
 
         self.update_scan_area_check()
-
-        self.menu.addSeparator()
-
-        self.enable_action = self.menu.addAction(f"{APP_NAME} Enabled")
-        self.enable_action.setCheckable(True)
-        self.enable_action.triggered.connect(self.set_enabled_state)
-        self.set_enabled_state(config.is_enabled)
-        self.activated.connect(self.on_tray_activated)
 
         self.menu.addSeparator()
 
