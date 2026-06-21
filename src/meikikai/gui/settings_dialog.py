@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from meikikai.config.config import config, APP_NAME
+from meikikai.config.config import APP_NAME, MIN_AUTO_SCAN_INTERVAL_SECONDS, config
 from meikikai.gui.popup import Popup
 from meikikai.ocr.ocr import OcrProcessor
 from meikikai.utils.paths import paths
@@ -64,7 +64,7 @@ class SettingsDialog(QDialog):
         self._prepare_numeric_control(self.max_lookup_spin, 64)
 
         self.auto_scan_interval_spin = DecimalSpinBox()
-        self.auto_scan_interval_spin.setRange(0.0, 60.0)
+        self.auto_scan_interval_spin.setRange(MIN_AUTO_SCAN_INTERVAL_SECONDS, 60.0)
         self.auto_scan_interval_spin.setDecimals(1)
         self.auto_scan_interval_spin.setSingleStep(0.1)
         self.auto_scan_interval_spin.setValue(config.auto_scan_interval_seconds)

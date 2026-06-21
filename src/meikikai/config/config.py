@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 APP_NAME = "MeikiKai"
 APP_VERSION = "1.0.0"
 MAX_DICT_ENTRIES = 10
+MIN_AUTO_SCAN_INTERVAL_SECONDS = 0.1
 IS_MACOS = sys.platform == 'darwin'
 
 if not IS_MACOS:
@@ -58,6 +59,8 @@ class Config:
                         val = parser.get(source_section, key)
                 else:
                     val = default
+                if key == 'auto_scan_interval_seconds':
+                    val = max(MIN_AUTO_SCAN_INTERVAL_SECONDS, val)
                 setattr(self, key, val)
 
         self.is_paused = False
