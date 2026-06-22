@@ -102,7 +102,8 @@ Export behavior:
 - Blocks duplicate cards by the first `Key` field.
 
 <p align="center">
-  <img width="496" alt="MeikiKai Anki card back example" src="design/card-back.png">
+  <img width="496" alt="MeikiKai Anki card back example" src="design/card-back.png"><br>
+  <sub>Screenshot content from <a href="https://www.youtube.com/watch?v=FV1uXLlfN20">“1 hour Japanese immersion: Comprehensible Listening Practice! N5-N3 #149”</a> by <a href="https://www.youtube.com/@kensanokaeri">けんさんおかえり Japanese</a>.</sub>
 </p>
 
 ## Dictionary commands
