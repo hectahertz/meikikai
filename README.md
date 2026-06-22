@@ -48,7 +48,7 @@ Create Anki recognition cards from the visible top vocabulary entry, with popup-
 - Python 3.10+ when running from source
 - macOS permissions:
   - Screen Recording, for OCR screenshots
-  - Accessibility, for global hotkeys and media automation
+  - Accessibility, for global hotkeys
   - Input Monitoring, if macOS requests it for input hooks
 - Required for OCR: Chrome Screen AI, installed only after you opt in from MeikiKai's OCR Setup UI. It is downloaded from Google/Chromium public infrastructure, is not bundled with MeikiKai, and can be removed later.
 - Optional for Anki export: [Anki](https://apps.ankiweb.net/) with [AnkiConnect](https://ankiweb.net/shared/info/2055492159)
@@ -115,7 +115,7 @@ Export behavior:
 - By default, opens the native macOS screenshot cropper before adding the card; pressing Esc cancels card creation. Disable this in Settings to add cards without screenshots.
 - Includes expression, reading, lookup text, highlighted sentence, optional screenshot, definitions, part of speech, tags, frequency, deconjugation, kanji info, and entry ID fields.
 - Adds tags `meikikai` and `meikikai-vocab`.
-- Blocks duplicate cards by the first `Key` field.
+- Blocks duplicate cards by MeikiKai's first `Key` field, which combines the entry ID, expression, and reading.
 
 ## Dictionary commands
 
@@ -158,12 +158,14 @@ find src scripts -name '*.py' -print0 | xargs -0 .venv/bin/python -m py_compile
 Build the macOS app:
 
 ```bash
+.venv/bin/python -m pip install pyinstaller
 .venv/bin/python -m PyInstaller -y meikikai.macos.spec
 ```
 
 Build, install to `/Applications/MeikiKai.app`, and reopen locally:
 
 ```bash
+.venv/bin/python -m pip install pyinstaller
 cp .env.example .env
 scripts/build_install_macos.sh
 ```
@@ -173,7 +175,7 @@ Optionally set `MEIKIKAI_CODESIGN_IDENTITY` in `.env` to re-sign the local build
 ## Troubleshooting
 
 - If OCR does not work, open Settings from the menu bar, manage the OCR Engine section, and confirm Chrome Screen AI is installed and ready. Then confirm Screen Recording permission for MeikiKai and relaunch the app.
-- If global hotkeys or media automation do not work, confirm Accessibility permission and relaunch.
+- If global hotkeys do not work, confirm Accessibility permission and relaunch.
 - After rebuilding or re-signing the app, macOS permissions can become stale. Remove MeikiKai from the affected permission list, add it again, then relaunch.
 - If Anki export says Anki is unavailable, open Anki with AnkiConnect enabled and try `Ctrl+Shift+M` again.
 - Check logs at `~/Library/Logs/MeikiKai/meikikai.log`.
