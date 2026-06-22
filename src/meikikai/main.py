@@ -6,7 +6,7 @@ import threading
 import webbrowser
 from urllib.parse import quote
 
-from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QObject, QTimer, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 
@@ -77,6 +77,7 @@ class SharedState:
 
         # events and queues
         self.screenshot_trigger_event = threading.Event()
+        self.ocr_available_event = threading.Event()
         self.ocr_queue = LatestValueQueue()
         self.hit_scan_queue = LatestValueQueue()
         self.lookup_queue = LatestValueQueue()
@@ -157,7 +158,7 @@ def run_gui():
 
     ocr_processor = OcrProcessor(shared_state)
     hit_scanner = HitScanner(shared_state, input_loop, screen_manager)
-    tray_icon = TrayIcon(screen_manager, ocr_processor, popup_window)
+    tray_icon = TrayIcon(screen_manager, popup_window, ocr_processor)
 
     anki_notifier = AnkiExportNotifier()
     anki_notifier.message.connect(tray_icon.show_anki_message)
@@ -256,6 +257,9 @@ def run_gui():
     for t in [lookup, hit_scanner, ocr_processor, screen_manager, input_loop, anki_worker]:
         t.start()
     global_hotkeys.start()
+
+    if not ocr_processor.is_backend_available():
+        QTimer.singleShot(250, tray_icon.show_screen_ai_setup)
 
     ready_message = f"""
     --------------------------------------------------

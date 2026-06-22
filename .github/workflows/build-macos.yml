@@ -27,6 +27,9 @@ jobs:
       - name: build app
         run: pyinstaller meikikai.macos.spec
 
+      - name: sign app
+        run: codesign --force --deep --options runtime --entitlements packaging/macos/entitlements.plist --sign - dist/MeikiKai.app
+
       - name: create dmg
         run: |
           rm -rf dist/dmg-root

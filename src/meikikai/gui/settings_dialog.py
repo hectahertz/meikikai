@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QPushButton,
     QSizePolicy,
     QSpinBox,
     QVBoxLayout,
@@ -20,7 +21,8 @@ from PyQt6.QtWidgets import (
 
 from meikikai.config.config import APP_NAME, MIN_AUTO_SCAN_INTERVAL_SECONDS, config
 from meikikai.gui.popup import Popup
-from meikikai.ocr.ocr import OcrProcessor
+from meikikai.gui.screen_ai_setup_dialog import ScreenAiSetupDialog
+from meikikai.ocr.providers.chrome_screen_ai.component import get_screen_ai_status
 from meikikai.utils.paths import paths
 
 FONT_STACK_QSS = '"SF Pro Text", "Helvetica Neue", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif'
@@ -90,11 +92,11 @@ class IndicatorCheckBox(QCheckBox):
 
 
 class SettingsDialog(QDialog):
-    def __init__(self, ocr_processor: OcrProcessor, popup_window: Popup, tray_icon, parent=None):
+    def __init__(self, popup_window: Popup, tray_icon, ocr_processor=None, parent=None):
         super().__init__(parent)
-        self.ocr_processor = ocr_processor
         self.popup_window = popup_window
         self.tray_icon = tray_icon
+        self.ocr_processor = ocr_processor
 
         self.setWindowTitle(f"{APP_NAME} Settings")
         self.setWindowIcon(QIcon(paths.get_resource_path('app_icon.icns')))
@@ -102,8 +104,16 @@ class SettingsDialog(QDialog):
         self._apply_window_style()
 
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(16, 12, 16, 20)
+        main_layout.setContentsMargins(18, 20, 18, 20)
         main_layout.setSpacing(0)
+
+        title_label = QLabel("Settings")
+        title_label.setObjectName("dialogTitle")
+        title_label.setTextFormat(Qt.TextFormat.PlainText)
+        title_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        title_label.setFixedHeight(28)
+        main_layout.addWidget(title_label)
+        main_layout.addSpacing(12)
 
         self.max_lookup_spin = QSpinBox()
         self.max_lookup_spin.setRange(5, 100)
@@ -141,6 +151,13 @@ class SettingsDialog(QDialog):
         self.anki_capture_screenshot_check = IndicatorCheckBox()
         self.anki_capture_screenshot_check.setChecked(config.anki_capture_screenshot)
 
+        self.screen_ai_status_badge = QLabel()
+        self.screen_ai_status_badge.setTextFormat(Qt.TextFormat.PlainText)
+        self.screen_ai_setup_button = QPushButton("Manage…")
+        self.screen_ai_setup_button.setObjectName("primaryButton")
+        self.screen_ai_setup_button.clicked.connect(self.open_screen_ai_setup)
+        self._update_screen_ai_status_badge()
+
         main_layout.addWidget(self._section(
             "Lookup",
             [self._setting_row(
@@ -165,6 +182,15 @@ class SettingsDialog(QDialog):
                 "Placement",
                 "Where the popup appears near the cursor.",
                 self.popup_position_combo,
+            )],
+        ))
+        main_layout.addSpacing(14)
+        main_layout.addWidget(self._section(
+            "OCR Engine",
+            [self._setting_row(
+                "Chrome Screen AI",
+                self._screen_ai_description(),
+                self._screen_ai_control(),
             )],
         ))
         main_layout.addSpacing(14)
@@ -215,6 +241,49 @@ class SettingsDialog(QDialog):
 
         self.resize(self.minimumWidth(), self.sizeHint().height())
 
+    def _screen_ai_description(self):
+        status = get_screen_ai_status()
+        if self.ocr_processor and self.ocr_processor.is_backend_available():
+            return "Ready. Downloaded separately from Google/Chromium; manage install, notices, or uninstall."
+        if status.installed:
+            return "Installed, but OCR is not loaded. Open Manage to reinstall/update or view details."
+        return "Required for OCR. Downloaded separately from Google/Chromium only after you choose Download."
+
+    def open_screen_ai_setup(self):
+        setup_dialog = ScreenAiSetupDialog(
+            self.ocr_processor,
+            tray_icon=self.tray_icon,
+            setup_required=not bool(self.ocr_processor and self.ocr_processor.is_backend_available()),
+            parent=self,
+        )
+        setup_dialog.exec()
+        self._update_screen_ai_status_badge()
+        self.tray_icon.reapply_settings()
+
+    def _screen_ai_control(self):
+        control = QWidget()
+        layout = QHBoxLayout(control)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(8)
+        layout.addWidget(self.screen_ai_status_badge)
+        layout.addWidget(self.screen_ai_setup_button)
+        return control
+
+    def _update_screen_ai_status_badge(self):
+        status = get_screen_ai_status()
+        ready = bool(self.ocr_processor and self.ocr_processor.is_backend_available())
+        if ready:
+            self.screen_ai_status_badge.setText("Ready")
+            self.screen_ai_status_badge.setObjectName("statusBadgeReady")
+        elif status.installed:
+            self.screen_ai_status_badge.setText("Reload")
+            self.screen_ai_status_badge.setObjectName("statusBadgeWarning")
+        else:
+            self.screen_ai_status_badge.setText("Missing")
+            self.screen_ai_status_badge.setObjectName("statusBadgeWarning")
+        self.screen_ai_status_badge.style().unpolish(self.screen_ai_status_badge)
+        self.screen_ai_status_badge.style().polish(self.screen_ai_status_badge)
+
     def _apply_window_style(self):
         base_font = QFont("SF Pro Text")
         base_font.setPixelSize(13)
@@ -225,6 +294,11 @@ class SettingsDialog(QDialog):
                 color: {TEXT_COLOR};
                 font-family: {FONT_STACK_QSS};
                 font-size: 13px;
+            }}
+            QLabel#dialogTitle {{
+                color: {TEXT_COLOR};
+                font-size: 20px;
+                font-weight: 800;
             }}
             QLabel#sectionLabel {{
                 color: {TEXT_COLOR};
@@ -277,6 +351,38 @@ class SettingsDialog(QDialog):
             QDoubleSpinBox:focus,
             QLineEdit:focus {{
                 border-color: rgba(10, 132, 255, 190);
+            }}
+            QPushButton#primaryButton {{
+                background-color: #0a84ff;
+                border: 1px solid rgba(123, 193, 255, 170);
+                border-radius: 7px;
+                color: #ffffff;
+                font-weight: 650;
+                min-height: 24px;
+                padding: 3px 10px;
+            }}
+            QPushButton#primaryButton:hover {{
+                background-color: #2492ff;
+            }}
+            QPushButton#primaryButton:pressed {{
+                background-color: #006edb;
+            }}
+            QLabel#statusBadgeReady,
+            QLabel#statusBadgeWarning {{
+                border-radius: 7px;
+                font-size: 10px;
+                font-weight: 750;
+                padding: 3px 7px;
+            }}
+            QLabel#statusBadgeReady {{
+                background-color: rgba(48, 209, 88, 18);
+                border: 1px solid rgba(48, 209, 88, 70);
+                color: #9be7ae;
+            }}
+            QLabel#statusBadgeWarning {{
+                background-color: rgba(255, 204, 0, 10);
+                border: 1px solid rgba(255, 204, 0, 44);
+                color: #e8c762;
             }}
         """)
 
@@ -390,6 +496,6 @@ class SettingsDialog(QDialog):
 
         self.popup_window.reapply_settings()
         self.tray_icon.reapply_settings()
-        self.ocr_processor.shared_state.screenshot_trigger_event.set()
+        self.popup_window.shared_state.screenshot_trigger_event.set()
 
         self.accept()

@@ -38,6 +38,10 @@ class ScreenManager(threading.Thread):
                     logger.debug("paused")
                     self._sleep_and_retrigger(1)
                     continue
+                if not self.shared_state.ocr_available_event.is_set():
+                    self.shared_state.screenshot_trigger_event.clear()
+                    time.sleep(0.25)
+                    continue
                 self.shared_state.screenshot_trigger_event.wait()
                 self.shared_state.screenshot_trigger_event.clear()
                 if not self.shared_state.running: break

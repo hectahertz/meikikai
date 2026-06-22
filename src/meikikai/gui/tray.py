@@ -6,12 +6,12 @@ from PyQt6.QtGui import QIcon, QAction, QActionGroup
 from PyQt6.QtWidgets import QSystemTrayIcon, QMenu, QApplication
 
 from meikikai.config.config import APP_NAME, config
+from meikikai.gui.screen_ai_setup_dialog import ScreenAiSetupDialog
 from meikikai.gui.settings_dialog import SettingsDialog
-from meikikai.ocr.ocr import OcrProcessor
 from meikikai.utils.paths import paths
 
 class TrayIcon(QSystemTrayIcon):
-    def __init__(self, screen_manager, ocr_processor: OcrProcessor, popup_window, parent=None):
+    def __init__(self, screen_manager, popup_window, ocr_processor, parent=None):
         icon_path = paths.get_resource_path('menubar_icon.png')
         icon_inactive_path = paths.get_resource_path('menubar_icon.inactive.png')
 
@@ -29,8 +29,8 @@ class TrayIcon(QSystemTrayIcon):
         super().__init__(self.icon, parent)
 
         self.screen_manager = screen_manager
-        self.ocr_processor = ocr_processor
         self.popup_window = popup_window
+        self.ocr_processor = ocr_processor
         self.scan_screen_actions = []
 
         self.menu = QMenu()
@@ -55,14 +55,14 @@ class TrayIcon(QSystemTrayIcon):
         self.menu.addSeparator()
 
         # Scan Screen Selection
-        scan_screen_menu = self.menu.addMenu("Scan Screen")
+        self.scan_screen_menu = self.menu.addMenu("Scan Screen")
         self.scan_screen_action_group = QActionGroup(self)
         self.scan_screen_action_group.setExclusive(True)
         self.scan_screen_action_group.triggered.connect(self._on_scan_screen_selected)
 
         for i, res in enumerate(self.screen_manager.get_screens()):
             label = "All Screens" if i == 0 else f"Screen {i}"
-            action = scan_screen_menu.addAction(f"{label} ({res['width']}x{res['height']})")
+            action = self.scan_screen_menu.addAction(f"{label} ({res['width']}x{res['height']})")
             action.setCheckable(True)
             action.setData(i)
             self.scan_screen_action_group.addAction(action)
@@ -76,6 +76,7 @@ class TrayIcon(QSystemTrayIcon):
 
         self.setContextMenu(self.menu)
         self.setToolTip(APP_NAME)
+        self.reapply_settings()
         self.show()
 
     def set_paused_state(self, paused):
@@ -117,6 +118,7 @@ class TrayIcon(QSystemTrayIcon):
     def reapply_settings(self):
         """Updates the tray menu's checkmarks to reflect the current config."""
         self.auto_pause_media_action.setChecked(config.auto_pause_media)
+        self.scan_screen_menu.setEnabled(self.ocr_processor.is_backend_available())
 
     @pyqtSlot(str, str, str)
     def show_status_message(self, title: str, message: str, level: str = "info"):
@@ -134,14 +136,24 @@ class TrayIcon(QSystemTrayIcon):
         self.show_status_message(title, message, level)
 
     def show_settings(self):
-        settings_dialog = SettingsDialog(self.ocr_processor, self.popup_window, self)
+        settings_dialog = SettingsDialog(self.popup_window, self, self.ocr_processor)
         self._activate_app_on_mac()
-        QTimer.singleShot(0, lambda: self._raise_settings_dialog(settings_dialog))
+        QTimer.singleShot(0, lambda: self._raise_dialog(settings_dialog))
         settings_dialog.exec()
 
-    def _raise_settings_dialog(self, settings_dialog):
-        settings_dialog.raise_()
-        settings_dialog.activateWindow()
+    def show_screen_ai_setup(self):
+        setup_dialog = ScreenAiSetupDialog(
+            self.ocr_processor,
+            tray_icon=self,
+            setup_required=not self.ocr_processor.is_backend_available(),
+        )
+        self._activate_app_on_mac()
+        QTimer.singleShot(0, lambda: self._raise_dialog(setup_dialog))
+        setup_dialog.exec()
+
+    def _raise_dialog(self, dialog):
+        dialog.raise_()
+        dialog.activateWindow()
 
     def _activate_app_on_mac(self):
         try:

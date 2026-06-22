@@ -21,17 +21,20 @@ def _get_build_version() -> str:
 
 
 BUILD_VERSION = _get_build_version()
+ENTITLEMENTS_FILE = 'packaging/macos/entitlements.plist'
+
+_datas = [
+    ('src/meikikai/resources/app_icon.icns', 'meikikai/resources'),
+    ('src/meikikai/resources/menubar_icon.png', 'meikikai/resources'),
+    ('src/meikikai/resources/menubar_icon.inactive.png', 'meikikai/resources'),
+    ('src/meikikai/scripts/deconjugator.json', 'meikikai/scripts'),
+]
 
 a = Analysis(
     ['src/meikikai/main.py'],
     pathex=['.'],
     binaries=[],
-    datas=[
-        ('src/meikikai/resources/app_icon.icns', 'meikikai/resources'),
-        ('src/meikikai/resources/menubar_icon.png', 'meikikai/resources'),
-        ('src/meikikai/resources/menubar_icon.inactive.png', 'meikikai/resources'),
-        ('src/meikikai/scripts/deconjugator.json', 'meikikai/scripts'),
-    ],
+    datas=_datas,
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -78,7 +81,7 @@ exe = EXE(
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
-    entitlements_file=None,
+    entitlements_file=ENTITLEMENTS_FILE,
 )
 
 coll = COLLECT(

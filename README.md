@@ -29,7 +29,7 @@ Create Anki recognition cards from the visible top vocabulary entry, with popup-
 ## Features
 
 - Works anywhere text is visible: games, visual novels, manga, videos, PDFs, websites, and more.
-- Uses local Japanese OCR through `meikiocr`.
+- Uses local Japanese OCR through Chrome Screen AI.
 - Supports horizontal and vertical Japanese text.
 - Looks up vocabulary with JMdict-style senses, deconjugation, frequency rank, part-of-speech, and tags.
 - Shows kanji details, readings, meanings, examples, and components.
@@ -50,6 +50,7 @@ Create Anki recognition cards from the visible top vocabulary entry, with popup-
   - Screen Recording, for OCR screenshots
   - Accessibility, for global hotkeys and media automation
   - Input Monitoring, if macOS requests it for input hooks
+- Required for OCR: Chrome Screen AI, installed only after you opt in from MeikiKai's OCR Setup UI. It is downloaded from Google/Chromium public infrastructure, is not bundled with MeikiKai, and can be removed later.
 - Optional for Anki export: [Anki](https://apps.ankiweb.net/) with [AnkiConnect](https://ankiweb.net/shared/info/2055492159)
 
 App data is stored in `~/Library/Application Support/meikikai/`.
@@ -75,6 +76,8 @@ meikikai
 
 The default dictionary is downloaded on first run if `dictionary.pkl` is missing.
 
+On first launch, MeikiKai opens OCR Setup if Chrome Screen AI is missing. MeikiKai does not bundle or automatically download Chrome Screen AI; choose **Download Chrome Screen AI…** explicitly to enable OCR. After installation, the same setup window provides reinstall/update, notices, and uninstall actions.
+
 ## Usage
 
 1. Start `MeikiKai.app` or run `meikikai`.
@@ -90,6 +93,7 @@ Settings are saved to `~/Library/Application Support/meikikai/config.ini`.
 - **Maximum lookup length**: how many OCR characters are kept before dictionary lookup.
 - **Scan cooldown**: minimum delay between OCR scans.
 - **Popup placement**: choose visual novel mode or flipped placement around the cursor.
+- **OCR Engine**: install, reinstall/update, inspect, view notices for, or uninstall the Chrome Screen AI component used by OCR.
 - **AnkiConnect URL**: defaults to `http://127.0.0.1:8765`.
 - **Capture screenshot**: opens the native macOS cropper before Anki card creation; Esc cancels card creation. Disable this to add cards without screenshots.
 
@@ -168,7 +172,7 @@ Optionally set `MEIKIKAI_CODESIGN_IDENTITY` in `.env` to re-sign the local build
 
 ## Troubleshooting
 
-- If OCR does not work, confirm Screen Recording permission for MeikiKai and relaunch the app.
+- If OCR does not work, open Settings from the menu bar, manage the OCR Engine section, and confirm Chrome Screen AI is installed and ready. Then confirm Screen Recording permission for MeikiKai and relaunch the app.
 - If global hotkeys or media automation do not work, confirm Accessibility permission and relaunch.
 - After rebuilding or re-signing the app, macOS permissions can become stale. Remove MeikiKai from the affected permission list, add it again, then relaunch.
 - If Anki export says Anki is unavailable, open Anki with AnkiConnect enabled and try `Ctrl+Shift+M` again.
