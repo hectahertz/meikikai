@@ -267,6 +267,10 @@ class Popup(QWidget):
         return None
 
     def process_latest_data_loop(self):
+        if is_capture_interaction_active():
+            self.hide_popup()
+            return
+
         latest_data = self.get_latest_data()
         if latest_data and latest_data != self._last_latest_data:
             self._set_entries(latest_data)
