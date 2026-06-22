@@ -192,6 +192,10 @@ class SettingsDialog(QDialog):
                     "While the popup is visible, copies the top entry expression to the clipboard."
                 ),
                 self._info_row(
+                    "Ctrl+Shift+J",
+                    "While the popup is visible, opens a Jisho.org search for the top entry expression."
+                ),
+                self._info_row(
                     "Ctrl+Shift+M",
                     "While the popup is visible, adds the top entry to Anki. "
                     "Deck and note type setup is automatic; duplicate words are skipped."

@@ -24,6 +24,7 @@ MEDIA_REMOTE_OSASCRIPT_TIMEOUT_SECONDS = 0.35
 MR_COMMAND_PLAY = 0
 MR_COMMAND_PAUSE = 1
 MACOS_KEYCODE_C = 8
+MACOS_KEYCODE_J = 38
 MACOS_KEYCODE_M = 46
 
 _MEDIA_REMOTE_UNAVAILABLE = object()
@@ -171,10 +172,12 @@ def pause_macos_media_if_playing() -> bool:
 class GlobalHotkeyListener:
     ANKI_HOTKEY_LABEL = "Ctrl+Shift+M"
     COPY_HOTKEY_LABEL = "Ctrl+Shift+C"
+    JISHO_HOTKEY_LABEL = "Ctrl+Shift+J"
 
-    def __init__(self, on_anki_export, on_copy_to_clipboard):
+    def __init__(self, on_anki_export, on_copy_to_clipboard, on_jisho_search):
         self.on_anki_export = on_anki_export
         self.on_copy_to_clipboard = on_copy_to_clipboard
+        self.on_jisho_search = on_jisho_search
         self._running = False
         self._thread = None
         self._loop = None
@@ -189,7 +192,8 @@ class GlobalHotkeyListener:
         self._thread = threading.Thread(target=self._run_event_tap, daemon=True, name="GlobalHotkeyListener")
         self._thread.start()
         logger.info(
-            f"Registered global hotkeys: {self.ANKI_HOTKEY_LABEL}, {self.COPY_HOTKEY_LABEL}"
+            "Registered global hotkeys: "
+            f"{self.ANKI_HOTKEY_LABEL}, {self.COPY_HOTKEY_LABEL}, {self.JISHO_HOTKEY_LABEL}"
         )
 
     def stop(self):
@@ -249,7 +253,7 @@ class GlobalHotkeyListener:
 
         try:
             keycode = Quartz.CGEventGetIntegerValueField(event, Quartz.kCGKeyboardEventKeycode)
-            if keycode not in (MACOS_KEYCODE_C, MACOS_KEYCODE_M):
+            if keycode not in (MACOS_KEYCODE_C, MACOS_KEYCODE_J, MACOS_KEYCODE_M):
                 return event
 
             if event_type == Quartz.kCGEventKeyUp and keycode in self._hotkeys_down:
@@ -287,6 +291,8 @@ class GlobalHotkeyListener:
                 return bool(self.on_anki_export())
             if keycode == MACOS_KEYCODE_C:
                 return bool(self.on_copy_to_clipboard())
+            if keycode == MACOS_KEYCODE_J:
+                return bool(self.on_jisho_search())
         except Exception:
             logger.exception("Global hotkey handler failed.")
             return True

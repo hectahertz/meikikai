@@ -251,6 +251,12 @@ class Popup(QWidget):
         return data
 
     def get_latest_copy_text(self):
+        return self._get_latest_top_entry_expression()
+
+    def get_latest_jisho_query(self):
+        return self._get_latest_top_entry_expression()
+
+    def _get_latest_top_entry_expression(self):
         with self._data_lock:
             data = self._last_latest_data
         if not self.is_visible or config.is_paused:

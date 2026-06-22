@@ -39,6 +39,7 @@ Create Anki recognition cards from the visible top vocabulary entry, with popup-
 - Runs from the macOS menu bar with pause, settings, screen selection, and quit controls.
 - Can pause currently playing macOS media while the popup is visible, then resume it afterward.
 - Copies the visible top vocabulary expression to the clipboard with `Ctrl+Shift+C`.
+- Opens a Jisho.org search for the visible top vocabulary expression with `Ctrl+Shift+J`.
 - Adds the visible top vocabulary entry directly to Anki through AnkiConnect, with optional cropped screenshots on cards.
 
 ## Requirements
@@ -79,7 +80,7 @@ The default dictionary is downloaded on first run if `dictionary.pkl` is missing
 1. Start `MeikiKai.app` or run `meikikai`.
 2. Grant macOS permissions when prompted.
 3. Move the mouse over Japanese text on the selected screen.
-4. Press `Ctrl+Shift+C` to copy the visible top vocabulary expression, or `Ctrl+Shift+M` to export it to Anki.
+4. Press `Ctrl+Shift+C` to copy the visible top vocabulary expression, `Ctrl+Shift+J` to search it on Jisho.org, or `Ctrl+Shift+M` to export it to Anki.
 5. Use the menu bar icon to pause, enable media auto-pause, open settings, choose the scan screen, or quit.
 
 ### Settings

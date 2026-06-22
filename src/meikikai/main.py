@@ -3,6 +3,8 @@ import argparse
 import signal
 import sys
 import threading
+import webbrowser
+from urllib.parse import quote
 
 from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QIcon
@@ -97,6 +99,39 @@ class ClipboardController(QObject):
         self.message.emit("Copied to clipboard", f"Copied {text}.", "success")
 
 
+class JishoSearchController(QObject):
+    search_requested = pyqtSignal(str)
+    message = pyqtSignal(str, str, str)
+
+    def __init__(self):
+        super().__init__()
+        self.search_requested.connect(self._open_search)
+
+    @pyqtSlot(str)
+    def _open_search(self, query: str):
+        query = query.strip()
+        if not query:
+            self.message.emit(
+                "Jisho search skipped",
+                "No visible vocabulary entry to search.",
+                "warning",
+            )
+            return
+
+        url = f"https://jisho.org/search/{quote(query, safe='')}"
+        try:
+            opened = webbrowser.open(url)
+        except Exception:
+            opened = False
+
+        if not opened:
+            self.message.emit(
+                "Jisho search failed",
+                "Could not open Jisho.org in the default browser.",
+                "critical",
+            )
+
+
 def run_gui():
     setup_logging()
     shared_state = SharedState()
@@ -124,6 +159,8 @@ def run_gui():
     anki_notifier.message.connect(tray_icon.show_anki_message)
     clipboard_controller = ClipboardController()
     clipboard_controller.message.connect(tray_icon.show_status_message)
+    jisho_controller = JishoSearchController()
+    jisho_controller.message.connect(tray_icon.show_status_message)
     anki_worker = AnkiExportWorker(
         config.anki_connect_url,
         DECK_NAME,
@@ -193,7 +230,24 @@ def run_gui():
         clipboard_controller.copy_requested.emit(text)
         return True
 
-    global_hotkeys = GlobalHotkeyListener(export_latest_to_anki, copy_latest_to_clipboard)
+    def search_latest_on_jisho():
+        query = popup_window.get_latest_jisho_query()
+        if not query:
+            jisho_controller.message.emit(
+                "Jisho search skipped",
+                "No visible vocabulary entry to search.",
+                "warning",
+            )
+            return True
+
+        jisho_controller.search_requested.emit(query)
+        return True
+
+    global_hotkeys = GlobalHotkeyListener(
+        export_latest_to_anki,
+        copy_latest_to_clipboard,
+        search_latest_on_jisho,
+    )
 
     for t in [lookup, hit_scanner, ocr_processor, screen_manager, input_loop, anki_worker]:
         t.start()
@@ -205,6 +259,7 @@ def run_gui():
 
       - To configure or change scan screen: Right-click the menu bar icon.
       - To copy the visible top entry expression: Ctrl+Shift+C.
+      - To search the visible top entry on Jisho.org: Ctrl+Shift+J.
       - To export the visible top entry to Anki: Ctrl+Shift+M.
       - To exit: Press Ctrl+C in this terminal.
 
