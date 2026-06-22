@@ -1,0 +1,1 @@
+"""AnkiConnect integration for MeikiKai."""

@@ -23,6 +23,7 @@ MEDIA_REMOTE_OSASCRIPT_TIMEOUT_SECONDS = 0.35
 
 MR_COMMAND_PLAY = 0
 MR_COMMAND_PAUSE = 1
+MACOS_KEYCODE_M = 46
 
 _MEDIA_REMOTE_UNAVAILABLE = object()
 _media_remote_framework = None
@@ -164,6 +165,115 @@ def pause_macos_media_if_playing() -> bool:
     if not is_macos_media_playing():
         return False
     return pause_macos_media()
+
+
+class GlobalHotkeyListener:
+    HOTKEY_LABEL = "Ctrl+Shift+M"
+
+    def __init__(self, on_anki_export):
+        self.on_anki_export = on_anki_export
+        self._running = False
+        self._thread = None
+        self._loop = None
+        self._tap = None
+        self._tap_callback = None
+        self._hotkey_down = False
+
+    def start(self):
+        if self._thread:
+            return
+        self._running = True
+        self._thread = threading.Thread(target=self._run_event_tap, daemon=True, name="AnkiHotkeyListener")
+        self._thread.start()
+        logger.info(f"Registered Anki export hotkey: {self.HOTKEY_LABEL}")
+
+    def stop(self):
+        self._running = False
+        if self._loop is not None:
+            Quartz.CFRunLoopStop(self._loop)
+        if self._thread is not None:
+            self._thread.join(timeout=1.0)
+        self._thread = None
+        self._loop = None
+        self._tap = None
+        self._tap_callback = None
+        self._hotkey_down = False
+
+    def _run_event_tap(self):
+        try:
+            event_mask = (
+                Quartz.CGEventMaskBit(Quartz.kCGEventKeyDown)
+                | Quartz.CGEventMaskBit(Quartz.kCGEventKeyUp)
+            )
+            self._tap_callback = self._handle_event
+            self._tap = Quartz.CGEventTapCreate(
+                Quartz.kCGSessionEventTap,
+                Quartz.kCGHeadInsertEventTap,
+                Quartz.kCGEventTapOptionDefault,
+                event_mask,
+                self._tap_callback,
+                None,
+            )
+            if self._tap is None:
+                logger.warning("Failed to create Anki export hotkey event tap. Check Accessibility permission.")
+                return
+
+            source = Quartz.CFMachPortCreateRunLoopSource(None, self._tap, 0)
+            self._loop = Quartz.CFRunLoopGetCurrent()
+            Quartz.CFRunLoopAddSource(self._loop, source, Quartz.kCFRunLoopDefaultMode)
+            Quartz.CGEventTapEnable(self._tap, True)
+
+            while self._running:
+                Quartz.CFRunLoopRunInMode(Quartz.kCFRunLoopDefaultMode, 0.25, False)
+        except Exception:
+            logger.exception("Anki export hotkey listener failed.")
+        finally:
+            self._loop = None
+            self._tap = None
+            self._tap_callback = None
+            self._running = False
+
+    def _handle_event(self, proxy, event_type, event, refcon):
+        if event_type in (
+            Quartz.kCGEventTapDisabledByTimeout,
+            Quartz.kCGEventTapDisabledByUserInput,
+        ):
+            if self._tap is not None:
+                Quartz.CGEventTapEnable(self._tap, True)
+            return event
+
+        try:
+            keycode = Quartz.CGEventGetIntegerValueField(event, Quartz.kCGKeyboardEventKeycode)
+            if keycode != MACOS_KEYCODE_M:
+                return event
+
+            if event_type == Quartz.kCGEventKeyUp and self._hotkey_down:
+                self._hotkey_down = False
+                return None
+
+            if event_type != Quartz.kCGEventKeyDown or not self._has_ctrl_shift(event):
+                return event
+
+            if not self._hotkey_down:
+                self._hotkey_down = True
+                self._on_anki_export()
+            return None
+        except Exception:
+            logger.exception("Anki export hotkey handler failed.")
+            return None
+
+    def _has_ctrl_shift(self, event) -> bool:
+        flags = Quartz.CGEventGetFlags(event)
+        return bool(
+            flags & Quartz.kCGEventFlagMaskControl
+            and flags & Quartz.kCGEventFlagMaskShift
+        )
+
+    def _on_anki_export(self):
+        try:
+            self.on_anki_export()
+        except Exception:
+            logger.exception("Anki export hotkey handler failed.")
 
 
 class InputLoop(threading.Thread):

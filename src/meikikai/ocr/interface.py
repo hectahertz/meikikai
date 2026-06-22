@@ -32,6 +32,15 @@ class Paragraph:
     is_vertical: bool  # True if text is top-to-bottom - optional
 
 
+@dataclass(frozen=True)
+class LookupContext:
+    """OCR context for the character under the cursor."""
+    lookup_text: str
+    full_text: str
+    hit_index: int
+    is_vertical: bool
+
+
 class OcrProvider(abc.ABC):
     """Abstract base class for MeikiKai's OCR backend."""
 

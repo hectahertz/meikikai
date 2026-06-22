@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QSizePolicy,
     QSpinBox,
     QVBoxLayout,
@@ -87,6 +88,10 @@ class SettingsDialog(QDialog):
         self.popup_position_combo.setCurrentText(current_friendly_name)
         self._prepare_popup_control(self.popup_position_combo)
 
+        self.anki_connect_url_edit = QLineEdit(config.anki_connect_url)
+        self.anki_connect_url_edit.setPlaceholderText("http://127.0.0.1:8765")
+        self._prepare_text_control(self.anki_connect_url_edit, 246)
+
         main_layout.addWidget(self._section(
             "Lookup",
             [self._setting_row(
@@ -112,6 +117,22 @@ class SettingsDialog(QDialog):
                 "Where the popup appears near the cursor.",
                 self.popup_position_combo,
             )],
+        ))
+        main_layout.addSpacing(14)
+        main_layout.addWidget(self._section(
+            "Anki",
+            [
+                self._setting_row(
+                    "AnkiConnect URL",
+                    "Local AnkiConnect endpoint used for direct card creation.",
+                    self.anki_connect_url_edit,
+                ),
+                self._info_row(
+                    "Ctrl+Shift+M",
+                    "While the popup is visible, adds the top entry to Anki. "
+                    "Deck and note type setup is automatic; duplicate words are skipped."
+                ),
+            ],
         ))
 
         main_layout.addSpacing(22)
@@ -152,6 +173,19 @@ class SettingsDialog(QDialog):
                 color: {MUTED_COLOR};
                 font-size: 11px;
             }}
+            QLabel#infoShortcut {{
+                background-color: rgba(10, 132, 255, 32);
+                border: 1px solid rgba(10, 132, 255, 76);
+                border-radius: 6px;
+                color: #c8e1ff;
+                font-size: 11px;
+                font-weight: 700;
+                padding: 3px 7px;
+            }}
+            QLabel#infoText {{
+                color: {MUTED_COLOR};
+                font-size: 11px;
+            }}
             QFrame#settingsPanel {{
                 background-color: {PANEL_BG};
                 border: 1px solid {PANEL_BORDER};
@@ -162,7 +196,8 @@ class SettingsDialog(QDialog):
                 border: none;
             }}
             QSpinBox,
-            QDoubleSpinBox {{
+            QDoubleSpinBox,
+            QLineEdit {{
                 background-color: rgba(237, 241, 247, 13);
                 border: 1px solid rgba(237, 241, 247, 22);
                 border-radius: 7px;
@@ -171,7 +206,8 @@ class SettingsDialog(QDialog):
                 selection-background-color: #0a84ff;
             }}
             QSpinBox:focus,
-            QDoubleSpinBox:focus {{
+            QDoubleSpinBox:focus,
+            QLineEdit:focus {{
                 border-color: rgba(10, 132, 255, 190);
             }}
         """)
@@ -184,6 +220,10 @@ class SettingsDialog(QDialog):
 
     def _prepare_popup_control(self, control):
         control.setFixedWidth(188)
+        control.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+
+    def _prepare_text_control(self, control, width):
+        control.setFixedWidth(width)
         control.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
     def _section(self, title, rows):
@@ -243,6 +283,27 @@ class SettingsDialog(QDialog):
         row_layout.addWidget(control, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         return row
 
+    def _info_row(self, shortcut, text):
+        row = QWidget()
+        row.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        row_layout = QHBoxLayout(row)
+        row_layout.setContentsMargins(14, 10, 14, 12)
+        row_layout.setSpacing(18)
+
+        shortcut_label = QLabel(shortcut)
+        shortcut_label.setObjectName("infoShortcut")
+        shortcut_label.setTextFormat(Qt.TextFormat.PlainText)
+        shortcut_label.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        row_layout.addWidget(shortcut_label, 1, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+
+        label = QLabel(text)
+        label.setObjectName("infoText")
+        label.setTextFormat(Qt.TextFormat.PlainText)
+        label.setWordWrap(True)
+        label.setFixedWidth(self.anki_connect_url_edit.width())
+        row_layout.addWidget(label, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        return row
+
     def _separator(self):
         separator = QFrame()
         separator.setObjectName("rowSeparator")
@@ -255,6 +316,7 @@ class SettingsDialog(QDialog):
 
         selected_friendly_name = self.popup_position_combo.currentText()
         config.popup_position_mode = self.popup_mode_map.get(selected_friendly_name, "visual_novel_mode")
+        config.anki_connect_url = self.anki_connect_url_edit.text().strip() or "http://127.0.0.1:8765"
         config.save()
 
         self.popup_window.reapply_settings()

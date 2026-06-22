@@ -3,7 +3,7 @@ import logging
 import threading
 from typing import List
 
-from meikikai.ocr.interface import Paragraph
+from meikikai.ocr.interface import LookupContext, Paragraph
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ class HitScanner(threading.Thread):
             for word in para.words:
                 if word is target_word:
                     break
-                word_start_index += len(word.text)
+                word_start_index += len(word.text) + len(word.separator or "")
 
             final_char_index = word_start_index + char_offset
             full_text = para.full_text
@@ -103,6 +103,11 @@ class HitScanner(threading.Thread):
             if final_char_index >= len(full_text):
                 continue
 
-            return full_text[final_char_index:]
+            return LookupContext(
+                lookup_text=full_text[final_char_index:],
+                full_text=full_text,
+                hit_index=final_char_index,
+                is_vertical=para.is_vertical,
+            )
 
         return None

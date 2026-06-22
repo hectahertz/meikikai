@@ -5,11 +5,12 @@ import re
 import threading
 from collections import OrderedDict
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 from meikikai.config.config import config, MAX_DICT_ENTRIES, DICT_PATH
 from meikikai.dictionary.customdict import Dictionary, WRITTEN_FORM_INDEX, READING_INDEX, FREQUENCY_INDEX, ENTRY_ID_INDEX, DEFAULT_FREQ
 from meikikai.dictionary.deconjugator import Deconjugator, Form
+from meikikai.ocr.interface import LookupContext
 
 KANJI_REGEX = re.compile(r'[\u4e00-\u9faf]')
 JAPANESE_SEPARATORS = {
@@ -31,6 +32,8 @@ class DictionaryEntry:
     freq: int
     deconjugation_process: tuple
     priority: float = 0.0
+    match_len: int = 0
+    matched_text: str = ""
 
 
 @dataclass
@@ -40,6 +43,19 @@ class KanjiEntry:
     readings: List[str]
     components: List[Dict[str, str]]
     examples: List[Dict[str, str]]
+
+
+LookupEntry = Union[DictionaryEntry, KanjiEntry]
+
+
+@dataclass
+class LookupResult:
+    entries: List[LookupEntry]
+    context: Optional[LookupContext] = None
+    lookup_text: str = ""
+
+    def __bool__(self) -> bool:
+        return bool(self.entries)
 
 
 class Lookup(threading.Thread):
@@ -76,9 +92,11 @@ class Lookup(threading.Thread):
                 logger.exception("An unexpected error occurred in the lookup loop. Continuing...")
         logger.debug("Lookup thread stopped.")
 
-    def lookup(self, lookup_string: str) -> List:
+    def lookup(self, hit: Union[str, LookupContext]) -> LookupResult:
+        context = hit if isinstance(hit, LookupContext) else None
+        lookup_string = context.lookup_text if context else hit
         if not lookup_string:
-            return []
+            return LookupResult([], context=context)
         logger.info(f"Looking up: {lookup_string}")  # keep at info level so people know whats up
 
         text = lookup_string.strip()
@@ -88,11 +106,11 @@ class Lookup(threading.Thread):
                 text = text[:i]
                 break
         if not text:
-            return []
+            return LookupResult([], context=context)
 
         if text in self.lookup_cache:
             self.lookup_cache.move_to_end(text)
-            return self.lookup_cache[text]
+            return LookupResult(self.lookup_cache[text], context=context, lookup_text=text)
 
         results = self._do_lookup(text)
 
@@ -119,7 +137,7 @@ class Lookup(threading.Thread):
         self.lookup_cache[text] = results
         if len(self.lookup_cache) > self.CACHE_SIZE:
             self.lookup_cache.popitem(last=False)
-        return results
+        return LookupResult(results, context=context, lookup_text=text)
 
     def _do_lookup(self, text: str) -> List[DictionaryEntry]:
         """
@@ -272,6 +290,8 @@ class Lookup(threading.Thread):
                 freq=d['freq'],
                 deconjugation_process=d['deconjugation_process'],
                 priority=d['priority'],
+                match_len=d['match_len'],
+                matched_text=original_lookup[:d['match_len']],
             ))
         return results
 

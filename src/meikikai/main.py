@@ -8,9 +8,11 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 
 from meikikai.utils.logger import setup_logging
-from meikikai.config.config import APP_NAME, APP_VERSION
+from meikikai.anki.cards import DECK_NAME, MODEL_NAME
+from meikikai.anki.worker import AnkiExportNotifier, AnkiExportWorker
+from meikikai.config.config import APP_NAME, APP_VERSION, config
 from meikikai.dictionary.lookup import Lookup
-from meikikai.gui.input import InputLoop, request_accessibility_access
+from meikikai.gui.input import GlobalHotkeyListener, InputLoop, request_accessibility_access
 from meikikai.gui.popup import Popup
 from meikikai.gui.tray import TrayIcon
 from meikikai.ocr.hit_scan import HitScanner
@@ -101,14 +103,32 @@ def run_gui():
     hit_scanner = HitScanner(shared_state, input_loop, screen_manager)
     tray_icon = TrayIcon(screen_manager, ocr_processor, popup_window)
 
-    for t in [lookup, hit_scanner, ocr_processor, screen_manager, input_loop]:
+    anki_notifier = AnkiExportNotifier()
+    anki_notifier.message.connect(tray_icon.show_anki_message)
+    anki_worker = AnkiExportWorker(
+        config.anki_connect_url,
+        DECK_NAME,
+        MODEL_NAME,
+        anki_notifier,
+    )
+
+    def export_latest_to_anki():
+        export_data = popup_window.get_latest_export_data()
+        if export_data is not None:
+            anki_worker.submit(export_data)
+
+    anki_hotkeys = GlobalHotkeyListener(export_latest_to_anki)
+
+    for t in [lookup, hit_scanner, ocr_processor, screen_manager, input_loop, anki_worker]:
         t.start()
+    anki_hotkeys.start()
 
     ready_message = f"""
     --------------------------------------------------
     {APP_NAME}.{APP_VERSION} is running in the background.
 
       - To configure or change scan screen: Right-click the menu bar icon.
+      - To export the visible top entry to Anki: Ctrl+Shift+M.
       - To exit: Press Ctrl+C in this terminal.
 
     --------------------------------------------------
@@ -122,6 +142,8 @@ def run_gui():
     signal.signal(signal.SIGTERM, signal_handler)
     exit_code = app.exec()
 
+    anki_hotkeys.stop()
+    anki_worker.stop()
     shared_state.running = False
     shared_state.screenshot_trigger_event.set()
     shared_state.ocr_queue.put(None)

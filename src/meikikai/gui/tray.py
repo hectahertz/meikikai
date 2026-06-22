@@ -10,7 +10,6 @@ from meikikai.gui.settings_dialog import SettingsDialog
 from meikikai.ocr.ocr import OcrProcessor
 from meikikai.utils.paths import paths
 
-
 class TrayIcon(QSystemTrayIcon):
     def __init__(self, screen_manager, ocr_processor: OcrProcessor, popup_window, parent=None):
         icon_path = paths.get_resource_path('menubar_icon.png')
@@ -118,6 +117,16 @@ class TrayIcon(QSystemTrayIcon):
     def reapply_settings(self):
         """Updates the tray menu's checkmarks to reflect the current config."""
         self.auto_pause_media_action.setChecked(config.auto_pause_media)
+
+    def show_anki_message(self, title: str, message: str, level: str = "info"):
+        icons = {
+            "success": QSystemTrayIcon.MessageIcon.Information,
+            "duplicate": QSystemTrayIcon.MessageIcon.Information,
+            "info": QSystemTrayIcon.MessageIcon.Information,
+            "warning": QSystemTrayIcon.MessageIcon.Warning,
+            "critical": QSystemTrayIcon.MessageIcon.Critical,
+        }
+        self.showMessage(title, message, icons.get(level, QSystemTrayIcon.MessageIcon.Information), 4500)
 
     def show_settings(self):
         settings_dialog = SettingsDialog(self.ocr_processor, self.popup_window, self)

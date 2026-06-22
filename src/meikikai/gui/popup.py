@@ -22,7 +22,7 @@ from PyQt6.QtWidgets import (
 
 from meikikai.config.config import config
 from meikikai.dictionary.customdict import DEFAULT_FREQ
-from meikikai.dictionary.lookup import DictionaryEntry, KanjiEntry
+from meikikai.dictionary.lookup import DictionaryEntry, KanjiEntry, LookupResult
 from meikikai.gui.input import pause_macos_media_if_playing, play_macos_media
 
 try:
@@ -239,21 +239,48 @@ class Popup(QWidget):
         with self._data_lock:
             return self._latest_data
 
+    def get_latest_export_data(self):
+        with self._data_lock:
+            data = self._last_latest_data
+        if not self.is_visible or config.is_paused:
+            return None
+        if not self._top_visible_dictionary_entry(data):
+            return None
+        return data
+
+    @staticmethod
+    def _entries_from_data(data):
+        if isinstance(data, LookupResult):
+            return data.entries
+        return data
+
+    @classmethod
+    def _top_visible_dictionary_entry(cls, data) -> Optional[DictionaryEntry]:
+        entries = cls._entries_from_data(data)
+        if not entries:
+            return None
+        for entry in entries:
+            if isinstance(entry, DictionaryEntry):
+                return entry
+        return None
+
     def process_latest_data_loop(self):
         latest_data = self.get_latest_data()
         if latest_data and latest_data != self._last_latest_data:
             self._set_entries(latest_data)
-        self._last_latest_data = latest_data
+        with self._data_lock:
+            self._last_latest_data = latest_data
 
         mouse_pos = QCursor.pos()
         self.move_to(mouse_pos.x(), mouse_pos.y())
 
-        if self._latest_data and not config.is_paused:
+        if latest_data and not config.is_paused:
             self.show_popup()
         else:
             self.hide_popup()
 
-    def _set_entries(self, entries: Optional[List[DictionaryEntry | KanjiEntry]]):
+    def _set_entries(self, data: Optional[LookupResult | List[DictionaryEntry | KanjiEntry]]):
+        entries = self._entries_from_data(data)
         content = QWidget()
         content.setFixedWidth(CONTENT_WIDTH)
         content.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
