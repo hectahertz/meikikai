@@ -174,6 +174,7 @@ class Popup(QWidget):
         self._previous_active_app_on_mac = None
         self._auto_pause_media_triggered = False
         self._auto_pause_media_resume_deferred = False
+        self._suppress_next_focus_restore = False
 
         self.shared_state = shared_state
 
@@ -784,6 +785,17 @@ class Popup(QWidget):
             return
         self.hide()
 
+    def hide_popup_for_external_navigation(self):
+        with self._data_lock:
+            self._latest_data = None
+            self._last_latest_data = None
+        if not self.is_visible:
+            return
+        self._auto_pause_media_triggered = False
+        self._auto_pause_media_resume_deferred = False
+        self._suppress_next_focus_restore = True
+        self.hide()
+
     def hideEvent(self, event):
         was_visible = self.is_visible
         super().hideEvent(event)
@@ -793,7 +805,11 @@ class Popup(QWidget):
         self.is_visible = False
         self._resume_auto_paused_media()
         QTimer.singleShot(50, lambda: self._release_lock_safely())
-        QTimer.singleShot(0, self._restore_focus_on_mac)
+        if self._suppress_next_focus_restore:
+            self._suppress_next_focus_restore = False
+            self._previous_active_app_on_mac = None
+        else:
+            QTimer.singleShot(0, self._restore_focus_on_mac)
 
     def _release_lock_safely(self):
         logger.debug("hide_popup releasing lock...")

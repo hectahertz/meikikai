@@ -103,8 +103,9 @@ class JishoSearchController(QObject):
     search_requested = pyqtSignal(str)
     message = pyqtSignal(str, str, str)
 
-    def __init__(self):
+    def __init__(self, popup_window: Popup):
         super().__init__()
+        self.popup_window = popup_window
         self.search_requested.connect(self._open_search)
 
     @pyqtSlot(str)
@@ -130,6 +131,9 @@ class JishoSearchController(QObject):
                 "Could not open Jisho.org in the default browser.",
                 "critical",
             )
+            return
+
+        self.popup_window.hide_popup_for_external_navigation()
 
 
 def run_gui():
@@ -159,7 +163,7 @@ def run_gui():
     anki_notifier.message.connect(tray_icon.show_anki_message)
     clipboard_controller = ClipboardController()
     clipboard_controller.message.connect(tray_icon.show_status_message)
-    jisho_controller = JishoSearchController()
+    jisho_controller = JishoSearchController(popup_window)
     jisho_controller.message.connect(tray_icon.show_status_message)
     anki_worker = AnkiExportWorker(
         config.anki_connect_url,
