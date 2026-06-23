@@ -1,32 +1,34 @@
 # MeikiKai
 
-MeikiKai is a macOS Japanese OCR popup dictionary. Hover over Japanese text anywhere on screen to see dictionary entries, kanji details, and deconjugation results.
+MeikiKai is a macOS menu bar OCR popup dictionary for Japanese. It uses local Chrome Screen AI OCR on the selected display, looks up the text under your cursor, and shows a compact dictionary popup.
 
 <p align="center">
-  <img width="496" alt="MeikiKai popup example" src="design/meikikai_popup_complete.png">
+  <img width="496" alt="MeikiKai popup example using the default Nord theme" src="design/meikikai_popup_complete.png">
 </p>
 
-Forked from [rtr46/meikipop](https://github.com/rtr46/meikipop).
+MeikiKai is a fork of [rtr46/meikipop](https://github.com/rtr46/meikipop). It is macOS-only.
 
-## Highlights
+## What it does
 
-- **Redesigned dark popup** with kanji cards, frequency, tags, and deconjugation details.
-- **Configurable popup themes and layouts** for compact, balanced, or complete dictionary detail.
-- **Cleaner settings window** for lookup, scanning, popup theme/layout, popup placement, and AnkiConnect.
-- **macOS-only app flow** with menu bar controls and popup behavior that works across fullscreen apps and Spaces.
-- **One-display or all-displays scanning** from the menu bar.
-- **Optional media auto-pause** while dictionary results are visible.
-- **Direct Anki export** through AnkiConnect, with automatic deck/note type setup and optional screenshots.
+- Reads screen-visible Japanese text from apps, videos, visual novels, PDFs, websites, manga readers, and similar sources.
+- Shows JMdict-style vocabulary entries with readings, definitions, part-of-speech, tags, frequency rank, and deconjugation details.
+- Adds kanji support cards for matched text, including readings, meanings, examples, and components when available.
+- Supports horizontal and vertical Japanese OCR results.
+- Lets you choose the scan target: one display or all displays.
+- Provides popup density controls: layout, number of entries, senses per entry, and glosses per sense.
+- Uses Nord as the default popup theme, with Nazeka, Catppuccin, and Kanagawa Wave available.
+- Can copy the top visible entry, open it on Jisho.org, or export it directly to Anki.
+- Can optionally pause macOS Now Playing media while the popup is visible, then resume only media it paused.
 
 ## Popup layouts
 
-Choose how much structure the popup shows without changing the core text scale. Layout controls the popup shape and kanji presentation. Entry, sense, and gloss counts are separate settings.
+Layout changes the popup width, spacing, metadata visibility, and kanji presentation. It does not change the selected theme. The default layout is Complete.
 
 <table>
   <tr>
     <th>Compact</th>
     <th>Standard</th>
-    <th>Complete</th>
+    <th>Complete (default)</th>
   </tr>
   <tr>
     <td><img width="240" alt="MeikiKai Compact popup layout" src="design/meikikai_popup_compact.png"></td>
@@ -37,68 +39,47 @@ Choose how much structure the popup shows without changing the core text scale. 
 
 ## Popup themes
 
-Nord is the default popup theme. Nazeka follows the Meikipop/MeikiKai default style, while Catppuccin and Kanagawa Wave offer editor-inspired alternatives.
+Nord is the default MeikiKai theme. Nazeka is the legacy Meikipop-style palette. Catppuccin and Kanagawa Wave are alternate dark palettes.
 
 <table>
   <tr>
     <th>Nazeka</th>
     <th>Nord (default)</th>
+  </tr>
+  <tr>
+    <td><img width="380" alt="MeikiKai Nazeka popup theme" src="design/meikikai_popup_theme_nazeka.png"></td>
+    <td><img width="380" alt="MeikiKai Nord popup theme" src="design/meikikai_popup_theme_nord.png"></td>
+  </tr>
+  <tr>
     <th>Catppuccin</th>
     <th>Kanagawa Wave</th>
   </tr>
   <tr>
-    <td><img width="240" alt="MeikiKai Nazeka popup theme" src="design/meikikai_popup_theme_nazeka.png"></td>
-    <td><img width="240" alt="MeikiKai Nord popup theme" src="design/meikikai_popup_theme_nord.png"></td>
-    <td><img width="240" alt="MeikiKai Catppuccin popup theme" src="design/meikikai_popup_theme_catppuccin.png"></td>
-    <td><img width="240" alt="MeikiKai Kanagawa Wave popup theme" src="design/meikikai_popup_theme_kanagawa_wave.png"></td>
+    <td><img width="380" alt="MeikiKai Catppuccin popup theme" src="design/meikikai_popup_theme_catppuccin.png"></td>
+    <td><img width="380" alt="MeikiKai Kanagawa Wave popup theme" src="design/meikikai_popup_theme_kanagawa_wave.png"></td>
   </tr>
 </table>
-
-## Direct Anki export
-
-Create Anki recognition cards from the visible top vocabulary entry, with popup-style details and optional cropped screenshots.
-
-<p align="center">
-  <img width="496" alt="MeikiKai Anki card back example" src="design/card-back.png"><br>
-  <sub>Screenshot content from <a href="https://www.youtube.com/watch?v=FV1uXLlfN20">“1 hour Japanese immersion: Comprehensible Listening Practice! N5-N3 #149”</a> by <a href="https://www.youtube.com/@kensanokaeri">けんさんおかえり Japanese</a>.</sub>
-</p>
-
-## Features
-
-- Works anywhere text is visible: games, visual novels, manga, videos, PDFs, websites, and more.
-- Uses local Japanese OCR through Chrome Screen AI.
-- Supports horizontal and vertical Japanese text.
-- Looks up vocabulary with JMdict-style senses, deconjugation, frequency rank, part-of-speech, and tags.
-- Shows kanji details, readings, meanings, examples, and components.
-- Lets you choose Nazeka, Nord, Catppuccin, or Kanagawa Wave themes, plus Compact, Standard, or Complete popup layout.
-- Lets you set visible entries, senses, and glosses independently.
-- Imports Yomitan/Yomichan dictionaries.
-- Scans one selected display or all displays.
-- Stays visible across macOS Spaces and fullscreen apps.
-- Runs from the macOS menu bar with pause, settings, screen selection, and quit controls.
-- Can pause currently playing macOS media while the popup is visible, then resume it afterward.
-- Copies the visible top vocabulary expression to the clipboard with `Ctrl+Shift+C`.
-- Opens a Jisho.org search for the visible top vocabulary expression with `Ctrl+Shift+J`.
-- Adds the visible top vocabulary entry directly to Anki through AnkiConnect, with optional cropped screenshots on cards.
 
 ## Requirements
 
 - macOS
 - Python 3.10+ when running from source
 - macOS permissions:
-  - Screen Recording, for OCR screenshots
-  - Accessibility, for global hotkeys
+  - Screen Recording, so MeikiKai can read screen content for OCR
+  - Accessibility, for global hotkeys/input handling
   - Input Monitoring, if macOS requests it for input hooks
-- Required for OCR: Chrome Screen AI, installed only after you opt in from MeikiKai's OCR Setup UI. It is downloaded from Google/Chromium public infrastructure, is not bundled with MeikiKai, and can be removed later.
-- Optional for Anki export: [Anki](https://apps.ankiweb.net/) with [AnkiConnect](https://ankiweb.net/shared/info/2055492159)
+- Chrome Screen AI for OCR. MeikiKai opens a setup window when it is missing, but downloads it only after you choose **Download Chrome Screen AI**. It is downloaded from Google/Chromium public infrastructure, is not bundled with MeikiKai, and can be uninstalled from Settings.
+- Optional: [Anki](https://apps.ankiweb.net/) with [AnkiConnect](https://ankiweb.net/shared/info/2055492159) for direct card export.
 
-App data is stored in `~/Library/Application Support/meikikai/`.
-Caches are stored in `~/Library/Caches/meikikai/`.
-Logs are stored in `~/Library/Logs/MeikiKai/meikikai.log`.
+MeikiKai stores user files here:
+
+- App data and dictionaries: `~/Library/Application Support/meikikai/`
+- Caches: `~/Library/Caches/meikikai/`
+- Logs: `~/Library/Logs/MeikiKai/meikikai.log`
 
 ## Install
 
-Download the latest macOS release DMG:
+Download the latest macOS DMG:
 
 <https://github.com/hectahertz/meikikai/releases/latest>
 
@@ -113,55 +94,60 @@ python -m pip install -e .
 meikikai
 ```
 
-The default dictionary is downloaded on first run if `dictionary.pkl` is missing.
+On first run:
 
-On first launch, MeikiKai opens OCR Setup if Chrome Screen AI is missing. MeikiKai does not bundle or automatically download Chrome Screen AI. Choose **Download Chrome Screen AI…** to enable OCR. After installation, the same setup window provides reinstall/update, notices, and uninstall actions.
+1. If `dictionary.pkl` is missing, MeikiKai downloads the default dictionary release.
+2. If Chrome Screen AI is missing, MeikiKai opens OCR setup. Choose **Download Chrome Screen AI** to enable OCR.
+3. Grant macOS permissions when prompted, then relaunch if macOS asks you to.
 
 ## Usage
 
 1. Start `MeikiKai.app` or run `meikikai`.
-2. Grant macOS permissions when prompted.
-3. Move the mouse over Japanese text on the selected screen.
-4. Press `Ctrl+Shift+C` to copy the visible top vocabulary expression, `Ctrl+Shift+J` to search it on Jisho.org, or `Ctrl+Shift+M` to export it to Anki.
-5. Use the menu bar icon to pause, enable media auto-pause, open settings, choose the scan screen, or quit.
+2. Make sure OCR setup says Chrome Screen AI is ready.
+3. Move the mouse over Japanese text on the selected scan screen.
+4. Use the popup or shortcuts:
 
-### Settings
+| Shortcut | Action |
+| --- | --- |
+| `Ctrl+Shift+C` | Copy the top visible vocabulary expression. |
+| `Ctrl+Shift+J` | Open a Jisho.org search for the top visible vocabulary expression. |
+| `Ctrl+Shift+M` | Export the top visible vocabulary entry to Anki. |
+
+The menu bar icon provides pause, media auto-pause, settings, scan-screen selection, and quit.
+
+## Settings
 
 Settings are saved to `~/Library/Application Support/meikikai/config.ini`.
 
-- **Maximum lookup length**: how many OCR characters are kept before dictionary lookup.
-- **Scan cooldown**: minimum delay between OCR scans.
-- **Popup theme**: choose Nazeka, Nord, Catppuccin, or Kanagawa Wave. Nord is the default.
-- **Popup layout**: choose Compact, Standard, or Complete. Complete preserves the full default popup.
-- **Entries shown**: choose how many vocabulary entries appear before the omitted-entry footer.
-- **Senses per entry**: choose how many numbered definition groups appear for each vocabulary entry.
-- **Glosses per sense**: choose how many comma-separated translation glosses appear inside each sense.
-- **Popup placement**: choose visual novel mode or flipped placement around the cursor.
-- **OCR Engine**: install, reinstall/update, inspect, view notices for, or uninstall the Chrome Screen AI component used by OCR.
-- **AnkiConnect URL**: defaults to `http://127.0.0.1:8765`.
-- **Capture screenshot**: opens the native macOS cropper before Anki card creation; Esc cancels card creation. Disable this to add cards without screenshots.
+- **Lookup**: maximum lookup length.
+- **Scanning**: OCR scan cooldown.
+- **Popup**: theme, layout, entries shown, senses per entry, glosses per sense, and placement around the cursor.
+- **OCR Engine**: Chrome Screen AI status, install/reinstall/update, third-party notices, and uninstall.
+- **Anki**: AnkiConnect URL and whether to open the native macOS cropper before card creation.
+- **Shortcuts**: read-only reminder of the global shortcuts.
 
-### Anki export
+## Anki export
 
-MeikiKai can create Anki cards directly through AnkiConnect.
+MeikiKai can create recognition cards through AnkiConnect from the top visible vocabulary entry. Install AnkiConnect, keep Anki open, hover text until the popup is visible, then press `Ctrl+Shift+M`.
 
-1. Install AnkiConnect in Anki.
-2. Keep Anki open.
-3. Hover text until the popup is visible.
-4. Press `Ctrl+Shift+M`.
+<p align="center">
+  <img width="496" alt="MeikiKai Anki card back example" src="design/card-back.png"><br>
+  <sub>Screenshot content from <a href="https://www.youtube.com/watch?v=FV1uXLlfN20">“1 hour Japanese immersion: Comprehensible Listening Practice! N5-N3 #149”</a> by <a href="https://www.youtube.com/@kensanokaeri">けんさんおかえり Japanese</a>.</sub>
+</p>
 
 Export behavior:
 
-- Exports only the top visible vocabulary entry.
-- Creates deck `MeikiKai Mining` automatically.
-- Creates or updates note type `MeikiKai Vocab` automatically when safe.
-- Uses a recognition card with the sentence on the front and popup-style details on the back.
-- By default, opens the native macOS screenshot cropper before adding the card; pressing Esc cancels card creation. Disable this in Settings to add cards without screenshots.
-- Includes expression, reading, lookup text, highlighted sentence, optional screenshot, definitions, part of speech, tags, frequency, deconjugation, kanji info, and entry ID fields.
+- Uses deck `MeikiKai Mining`.
+- Creates or updates note type `MeikiKai Vocab` when it can do so safely.
+- Refuses unsafe note-type changes if an incompatible existing note type already contains notes.
 - Adds tags `meikikai` and `meikikai-vocab`.
-- Blocks duplicate cards by MeikiKai's first `Key` field, which combines the entry ID, expression, and reading.
+- Blocks duplicates using MeikiKai's `Key` field, based on entry ID, expression, and reading.
+- Includes expression, reading, lookup text, highlighted sentence, definitions, part-of-speech, tags, frequency, deconjugation, kanji info, entry ID, and an optional cropped image.
+- By default, opens the native macOS crop UI before adding the card. Press Esc to cancel card creation, or disable image capture in Settings.
 
-## Dictionary commands
+## Dictionaries
+
+The default dictionary is downloaded automatically if `dictionary.pkl` is missing.
 
 Rebuild the bundled-format dictionary:
 
@@ -180,30 +166,10 @@ Imports overwrite `~/Library/Application Support/meikikai/dictionary.pkl`.
 
 ## Development
 
-Regenerate the README popup images:
+Run from source:
 
 ```bash
-.venv/bin/python scripts/render_popup_sample.py readme-layouts
-.venv/bin/python scripts/render_popup_sample.py readme-themes
-```
-
-Render popup layout option samples and contact sheet for UI review:
-
-```bash
-.venv/bin/python scripts/render_popup_sample.py layout-options
-```
-
-Render popup theme previews with Compact, Standard, and Complete samples:
-
-```bash
-.venv/bin/python scripts/render_popup_sample.py themes
-```
-
-Render Anki card samples for UI review:
-
-```bash
-.venv/bin/python scripts/render_anki_card_sample.py mockup both -o /tmp/meikikai_anki_card_mockup.png
-.venv/bin/python scripts/render_anki_card_sample.py mockup back -o design/card-back.png
+PYTHONPATH=src .venv/bin/python -m meikikai.main
 ```
 
 Quick syntax validation:
@@ -212,30 +178,31 @@ Quick syntax validation:
 find src scripts -name '*.py' -print0 | xargs -0 .venv/bin/python -m py_compile
 ```
 
-Build the macOS app:
+Regenerate README images:
 
 ```bash
-.venv/bin/python -m pip install pyinstaller
-.venv/bin/python -m PyInstaller -y meikikai.macos.spec
+.venv/bin/python scripts/render_popup_sample.py readme-layouts
+.venv/bin/python scripts/render_popup_sample.py readme-themes
+.venv/bin/python scripts/render_anki_card_sample.py mockup back -o design/card-back.png
 ```
 
 Build, install to `/Applications/MeikiKai.app`, and reopen locally:
 
 ```bash
-.venv/bin/python -m pip install pyinstaller
 cp .env.example .env
 scripts/build_install_macos.sh
 ```
 
-Optionally set `MEIKIKAI_CODESIGN_IDENTITY` in `.env` to re-sign the local build with a specific identity.
+Optionally set `MEIKIKAI_CODESIGN_IDENTITY` in `.env` to sign the local build with a specific identity.
 
 ## Troubleshooting
 
-- If OCR does not work, open Settings from the menu bar, manage the OCR Engine section, and confirm Chrome Screen AI is installed and ready. Then confirm Screen Recording permission for MeikiKai and relaunch the app.
-- If global hotkeys do not work, confirm Accessibility permission and relaunch.
-- After rebuilding or re-signing the app, macOS permissions can become stale. Remove MeikiKai from the affected permission list, add it again, then relaunch.
-- If Anki export says Anki is unavailable, open Anki with AnkiConnect enabled and try `Ctrl+Shift+M` again.
-- Check logs at `~/Library/Logs/MeikiKai/meikikai.log`.
+- **OCR unavailable**: open Settings → OCR Engine, confirm Chrome Screen AI is installed and ready, then confirm Screen Recording permission and relaunch.
+- **Hotkeys unavailable**: confirm Accessibility permission and relaunch.
+- **Permissions look correct but behavior is broken after rebuilding/signing**: remove MeikiKai from the affected macOS permission list, add it again, then relaunch.
+- **Anki export unavailable**: open Anki with AnkiConnect enabled, then press `Ctrl+Shift+M` again.
+- **Media auto-pause does nothing**: it depends on macOS Now Playing / MediaRemote support, so not every player may report or respond consistently.
+- **Need details**: check `~/Library/Logs/MeikiKai/meikikai.log`.
 
 ## License
 
