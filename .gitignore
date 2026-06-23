@@ -24,6 +24,8 @@ dictionary.pkl
 # Generated design review assets
 design/dialog-contact-sheet.png
 design/dialog-screenshots/
+design/popup-contact-sheet.png
+design/popup-screenshots/
 
 # MacOS things
 .DS_Store

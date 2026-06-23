@@ -22,6 +22,12 @@ Shared dialog styling lives in:
 - `src/meikikai/gui/design/styles.py`: generated QSS for dialogs.
 - `src/meikikai/gui/design/widgets.py`: small helpers for titles, separators, panels, and button variants.
 
+Popup styling lives separately in:
+
+- `src/meikikai/gui/popup_design/tokens.py`: popup content colors, type scale, density, truncation limits, width, and insets.
+- `src/meikikai/gui/popup_design/styles.py`: generated QSS helpers for popup frame, labels, separators, and kanji cards.
+- `scripts/render_popup_sample.py`: popup-only review renderer and contact sheet generator.
+
 Qt style sheets do not support CSS variables or OKLCH, so token values are stored as QSS-compatible RGB and rgba strings. When changing color direction, choose colors in OKLCH first, then convert the final values to Qt-compatible strings.
 
 ## Tokens
@@ -96,6 +102,39 @@ Use panels for grouped settings, component status, and install details. Settings
 
 Badges are short state labels only, such as Ready, Reload, Missing. They should not replace explanatory body text.
 
-## Popup guidance
+## Popup content system
 
-The popup has different constraints from dialogs: cursor anchoring, Japanese typography, and dense dictionary content. Keep it separate until dialog consistency is stable. When updating it later, map its colors and typography to shared tokens without forcing settings-row or dialog-panel patterns onto it.
+The popup has different constraints from dialogs: cursor anchoring, Japanese typography, and dense dictionary content. Keep it separate from the dialog package. Share product-level direction only: dark macOS utility, restrained color, native-ish typography, low distraction.
+
+### Scene and density
+
+The reader is looking away from the popup most of the time, then glances for one or two seconds while media or a visual novel is paused. The popup may be denser than dialogs, but it should still scan in this order:
+
+1. expression and reading,
+2. part-of-speech, frequency, and inflection context,
+3. glosses,
+4. kanji support card.
+
+### Popup tokens
+
+- Width: 496 px. This keeps long English glosses readable without covering too much screen content.
+- Inset: 12 px horizontal, 10 px top, 14 px bottom.
+- Surface: tinted near-black with 246 alpha and a quiet 1 px outline. Do not use pure black.
+- Accent vocabulary: cyan for written forms and glyphs, green for readings, warm muted gold for deconjugation. Accent is semantic, not decoration.
+- Text: definitions are near-white; metadata and sense numbers are muted so the word and glosses remain primary.
+- Detail accents: kanji examples and components use quieter cyan/green variants than primary expression and reading text.
+- Type: Hiragino Sans as the popup base family, with SF Pro Text and common Japanese fallbacks in QSS.
+- Scale: 21 px expression, 13 px vocabulary readings, 14 px kanji-card readings, 12 px definitions, 11 px metadata, 10 px kanji details.
+- Shape: 16 px popup radius, 10 px kanji card radius, 9 px kanji glyph well radius, 48 px square kanji glyph well.
+
+### Content policies
+
+- Show up to 3 vocabulary entries, 3 senses per entry, and 4 glosses per sense.
+- Omitted content uses a quiet footer such as `+ 2 more entries · 2 more senses · 2 more glosses`.
+- Use thin separators only between vocabulary entries. Kanji support uses a distinct inset card because it changes information type.
+- Place omitted-content footers directly after the visible vocabulary block, before kanji support cards.
+- Show kanji support cards only when the character belongs to the original lookup text or a visible vocabulary entry, so cards do not appear attached to omitted entries.
+- Use hanging indents for numbered senses so wrapped gloss lines align with the definition text, not the number.
+- Treat kanji `ex` and `parts` as a compact detail group: fixed label column, hanging wrapped detail text, clearer top gap after meanings, tight leading, and only a small gap between detail rows.
+- Keep kanji examples inline and compact. Avoid nested cards or dialog-style settings panels in popup content.
+- Review visual changes with `QT_QPA_PLATFORM=cocoa .venv/bin/python scripts/render_popup_sample.py all`; generated popup review artifacts are ignored by git.

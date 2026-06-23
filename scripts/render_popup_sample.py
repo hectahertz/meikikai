@@ -1,19 +1,30 @@
 #!/usr/bin/env python3
-"""Render MeikiKai popup sample states to PNG files for UI review."""
+"""Render MeikiKai popup sample states and a contact sheet for UI review."""
 
 from __future__ import annotations
 
 import argparse
+import os
 import sys
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
+
+if sys.platform == "darwin":
+    os.environ.setdefault("QT_QPA_PLATFORM", "cocoa")
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from PIL import Image, ImageDraw, ImageFont  # noqa: E402
+from PyQt6.QtCore import Qt  # noqa: E402
 from PyQt6.QtWidgets import QApplication  # noqa: E402
 
 from meikikai.dictionary.lookup import DictionaryEntry, KanjiEntry  # noqa: E402
 from meikikai.gui.popup import Popup  # noqa: E402
+
+OUTPUT_DIR = ROOT / "design" / "popup-screenshots"
+CONTACT_SHEET = ROOT / "design" / "popup-contact-sheet.png"
 
 
 class DummyLock:
@@ -26,6 +37,13 @@ class DummyLock:
 
 class DummyState:
     screen_lock = DummyLock()
+
+
+@dataclass(frozen=True)
+class PopupSample:
+    key: str
+    name: str
+    factory: Callable[[], list[DictionaryEntry | KanjiEntry]]
 
 
 def vocab(
@@ -224,60 +242,183 @@ def tall_entries() -> list[DictionaryEntry | KanjiEntry]:
     ]
 
 
+def samples() -> list[PopupSample]:
+    return [
+        PopupSample("mockup", "01-vocab-deconjugation-kanji", mockup_entries),
+        PopupSample("long", "02-long-inflection", long_entries),
+        PopupSample("nature", "03-multiple-kanji", nature_entries),
+        PopupSample("tall", "04-omitted-results", tall_entries),
+    ]
+
+
+def _popup_for_entries(app: QApplication, entries: list[DictionaryEntry | KanjiEntry]) -> Popup:
+    popup = Popup(DummyState())
+    popup.timer.stop()
+    popup.setAttribute(Qt.WidgetAttribute.WA_DontShowOnScreen, True)
+    popup._set_entries(entries)
+    app.processEvents()
+    return popup
+
+
+def _cleanup_popup(app: QApplication, popup: Popup) -> None:
+    popup.timer.stop()
+    popup.close()
+    popup.deleteLater()
+    app.processEvents()
+
+
 def render(entries: list[DictionaryEntry | KanjiEntry], output: Path) -> tuple[int, int]:
     app = QApplication.instance() or QApplication([])
-    popup = Popup(DummyState())
-    popup._set_entries(entries)
-    popup.show()
-    app.processEvents()
+    popup = _popup_for_entries(app, entries)
     image = popup.grab()
     output.parent.mkdir(parents=True, exist_ok=True)
     image.save(str(output))
-    return popup.size().width(), popup.size().height()
+    size = popup.size()
+    _cleanup_popup(app, popup)
+    return size.width(), size.height()
+
+
+def render_sample(app: QApplication, sample: PopupSample, output_dir: Path) -> Path:
+    popup = _popup_for_entries(app, sample.factory())
+    image = popup.grab()
+    output = output_dir / f"{sample.name}.png"
+    output.parent.mkdir(parents=True, exist_ok=True)
+    image.save(str(output))
+    _cleanup_popup(app, popup)
+    return output
 
 
 def render_switch(output: Path) -> tuple[int, int]:
     app = QApplication.instance() or QApplication([])
     popup = Popup(DummyState())
+    popup.timer.stop()
+    popup.setAttribute(Qt.WidgetAttribute.WA_DontShowOnScreen, True)
     for entries in (mockup_entries(), long_entries(), mockup_entries(), long_entries()):
         popup._set_entries(entries)
-        popup.show()
         app.processEvents()
     image = popup.grab()
     output.parent.mkdir(parents=True, exist_ok=True)
     image.save(str(output))
-    return popup.size().width(), popup.size().height()
+    size = popup.size()
+    _cleanup_popup(app, popup)
+    return size.width(), size.height()
+
+
+def _font(size: int, bold: bool = False):
+    candidates = [
+        "/System/Library/Fonts/SFNS.ttf",
+        "/System/Library/Fonts/Supplemental/Arial.ttf",
+        "/Library/Fonts/Arial.ttf",
+    ]
+    for candidate in candidates:
+        path = Path(candidate)
+        if path.exists():
+            try:
+                return ImageFont.truetype(str(path), size=size)
+            except OSError:
+                pass
+    return ImageFont.load_default()
+
+
+def make_contact_sheet(images: list[Path], output: Path, columns: int = 2) -> None:
+    loaded = [(path, Image.open(path).convert("RGBA")) for path in images]
+    if not loaded:
+        raise RuntimeError("No popup screenshots were rendered.")
+
+    label_font = _font(14, bold=True)
+    meta_font = _font(11)
+    tile_bg = (32, 33, 39, 255)
+    page_bg = tile_bg
+    text = (238, 242, 247, 255)
+    muted = (170, 179, 194, 255)
+
+    gutter = 18
+    margin = 20
+    label_h = 34
+    inner_pad = 10
+    tile_sizes = [(image.width + inner_pad * 2, image.height + inner_pad * 2) for _, image in loaded]
+    column_count = min(columns, len(loaded))
+    columns_data: list[list[tuple[int, Path, Image.Image, tuple[int, int]]]] = [[] for _ in range(column_count)]
+    column_heights = [0] * column_count
+
+    for index, ((path, image), tile_size) in enumerate(zip(loaded, tile_sizes)):
+        column = min(range(column_count), key=lambda col: column_heights[col])
+        columns_data[column].append((index, path, image, tile_size))
+        column_heights[column] += label_h + tile_size[1] + gutter
+
+    column_widths = [
+        max((tile_size[0] for _, _, _, tile_size in column), default=0)
+        for column in columns_data
+    ]
+    sheet_w = margin * 2 + sum(column_widths) + gutter * (column_count - 1)
+    sheet_h = margin * 2 + max(column_heights) - gutter
+
+    sheet = Image.new("RGBA", (sheet_w, sheet_h), page_bg)
+    draw = ImageDraw.Draw(sheet)
+
+    x = margin
+    for column_width, column in zip(column_widths, columns_data):
+        y = margin
+        for index, path, image, tile_size in column:
+            tile_x = x + (column_width - tile_size[0]) // 2
+            label = path.stem.removeprefix(f"{index + 1:02d}-").replace("-", " ").title()
+            draw.text((tile_x, y), label, fill=text, font=label_font)
+            draw.text((tile_x, y + 16), f"{image.width} × {image.height}px", fill=muted, font=meta_font)
+
+            tile_y = y + label_h
+            draw.rectangle((tile_x, tile_y, tile_x + tile_size[0], tile_y + tile_size[1]), fill=tile_bg)
+            image_x = tile_x + inner_pad
+            image_y = tile_y + inner_pad
+            sheet.alpha_composite(image, (image_x, image_y))
+            y += label_h + tile_size[1] + gutter
+        x += column_width + gutter
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    sheet.convert("RGB").save(output)
+
+
+def render_all(output_dir: Path, contact_sheet: Path, columns: int) -> list[Path]:
+    app = QApplication.instance() or QApplication([])
+    rendered = [render_sample(app, sample, output_dir) for sample in samples()]
+    make_contact_sheet(rendered, contact_sheet, columns=columns)
+    return rendered
+
+
+def _sample_by_key(key: str) -> PopupSample:
+    for sample in samples():
+        if sample.key == key:
+            return sample
+    raise KeyError(key)
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Render a MeikiKai popup sample PNG.")
+    parser = argparse.ArgumentParser(description="Render MeikiKai popup review PNGs.")
     parser.add_argument(
         "case",
         nargs="?",
-        choices=("mockup", "long", "switch", "tall", "nature"),
-        default="mockup",
-        help="Sample state to render. Default: mockup.",
+        choices=("all", "mockup", "long", "switch", "tall", "nature"),
+        default="all",
+        help="Sample state to render. Default: all review states and a contact sheet.",
     )
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=Path,
-        default=None,
-        help="Output PNG path. Default: /tmp/meikikai_popup_<case>.png",
-    )
+    parser.add_argument("-o", "--output", type=Path, default=None, help="Output PNG path for single-case renders.")
+    parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR, help="Output directory for all popup samples.")
+    parser.add_argument("--contact-sheet", type=Path, default=CONTACT_SHEET, help="Output contact sheet path for all samples.")
+    parser.add_argument("--columns", type=int, default=2, help="Contact sheet column count.")
     args = parser.parse_args()
 
+    if args.case == "all":
+        rendered = render_all(args.output_dir, args.contact_sheet, columns=args.columns)
+        for image in rendered:
+            print(image.relative_to(ROOT))
+        print(args.contact_sheet.relative_to(ROOT))
+        return 0
+
     output = args.output or Path(f"/tmp/meikikai_popup_{args.case}.png")
-    if args.case == "mockup":
-        width, height = render(mockup_entries(), output)
-    elif args.case == "long":
-        width, height = render(long_entries(), output)
-    elif args.case == "tall":
-        width, height = render(tall_entries(), output)
-    elif args.case == "nature":
-        width, height = render(nature_entries(), output)
-    else:
+    if args.case == "switch":
         width, height = render_switch(output)
+    else:
+        sample = _sample_by_key(args.case)
+        width, height = render(sample.factory(), output)
 
     print(f"Rendered {args.case} popup to {output} ({width}x{height})")
     return 0

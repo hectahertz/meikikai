@@ -5,26 +5,35 @@ from typing import Iterable, Optional
 
 from meikikai.dictionary.customdict import DEFAULT_FREQ
 from meikikai.dictionary.lookup import DictionaryEntry, KanjiEntry, LookupResult
-from meikikai.gui.popup import (
-    DECONJ_COLOR,
-    DEFINITION_COLOR,
-    DEFINITION_FONT_SIZE,
-    DETAIL_FONT_SIZE,
-    FONT_STACK_QSS,
-    KANJI_GLYPH_FONT_SIZE,
-    MAX_GLOSSES_PER_SENSE,
-    MAX_SENSES_PER_ENTRY,
-    META_FONT_SIZE,
-    META_LABEL_COLOR,
-    MUTED_COLOR,
-    POPUP_WIDTH,
-    READING_COLOR,
-    READING_FONT_SIZE,
-    SENSE_NUMBER_COLOR,
-    TEXT_COLOR,
-    WORD_COLOR,
-    WORD_FONT_SIZE,
-)
+from meikikai.gui.popup_design.tokens import POPUP
+
+DECONJ_COLOR = POPUP.deconjugation_text
+DEFINITION_COLOR = POPUP.definition_text
+DEFINITION_FONT_SIZE = POPUP.definition_font_size
+DETAIL_FONT_SIZE = POPUP.detail_font_size
+FONT_STACK_QSS = POPUP.font_stack_qss
+KANJI_GLYPH_FONT_SIZE = POPUP.kanji_glyph_font_size
+KANJI_READING_FONT_SIZE = POPUP.kanji_reading_font_size
+KANJI_BODY_ROW_GAP = POPUP.kanji_body_row_gap
+KANJI_DETAIL_TOP_GAP = POPUP.kanji_detail_top_gap
+KANJI_DETAIL_ROW_GAP = POPUP.kanji_detail_row_gap
+KANJI_DETAIL_LABEL_WIDTH = POPUP.kanji_detail_label_width
+KANJI_DETAIL_LABEL_GAP = POPUP.kanji_detail_label_gap
+KANJI_DETAIL_LINE_HEIGHT = POPUP.kanji_detail_line_height_percent / 100
+MAX_GLOSSES_PER_SENSE = POPUP.max_glosses_per_sense
+MAX_SENSES_PER_ENTRY = POPUP.max_senses_per_entry
+META_FONT_SIZE = POPUP.metadata_font_size
+META_LABEL_COLOR = POPUP.metadata_label_text
+MUTED_COLOR = POPUP.muted_text
+POPUP_WIDTH = POPUP.width
+READING_COLOR = POPUP.reading_text
+READING_FONT_SIZE = POPUP.reading_font_size
+SENSE_NUMBER_COLOR = POPUP.sense_number_text
+TEXT_COLOR = POPUP.text
+WORD_COLOR = POPUP.word_text
+DETAIL_WORD_COLOR = POPUP.detail_word_text
+DETAIL_READING_COLOR = POPUP.detail_reading_text
+WORD_FONT_SIZE = POPUP.word_font_size
 
 DECK_NAME = "MeikiKai Mining"
 MODEL_NAME = "MeikiKai Vocab"
@@ -250,15 +259,28 @@ def _kanji_card_html(entry: KanjiEntry) -> str:
         details.append(f'<div class="mk-kanji-reading">[{readings}]</div>')
     if meanings:
         details.append(f'<div class="mk-kanji-meanings">{meanings}</div>')
+
+    detail_rows = []
     if examples:
-        details.append(f'<div class="mk-kanji-detail">{examples}</div>')
+        detail_rows.append(_kanji_detail_row_html("ex", examples))
     if components:
-        details.append(f'<div class="mk-kanji-detail">{components}</div>')
+        detail_rows.append(_kanji_detail_row_html("parts", components))
+    if detail_rows:
+        details.append(f'<div class="mk-kanji-detail-group">{"".join(detail_rows)}</div>')
 
     return (
         '<div class="mk-kanji-card">'
         f'<div class="mk-kanji-glyph">{_escape(entry.character)}</div>'
         f'<div class="mk-kanji-body">{"".join(details)}</div>'
+        '</div>'
+    )
+
+
+def _kanji_detail_row_html(label: str, body: str) -> str:
+    return (
+        '<div class="mk-kanji-detail">'
+        f'<span class="mk-kanji-detail-label">{label}</span>'
+        f'<span class="mk-kanji-detail-body">{body}</span>'
         '</div>'
     )
 
@@ -276,7 +298,7 @@ def _kanji_examples_html(entry: KanjiEntry) -> str:
             )
     if not parts:
         return ""
-    return f'<span class="mk-label">ex</span> {"; ".join(parts)}'
+    return "; ".join(parts)
 
 
 def _kanji_components_html(entry: KanjiEntry) -> str:
@@ -290,7 +312,7 @@ def _kanji_components_html(entry: KanjiEntry) -> str:
             parts.append(f'<span class="mk-component-char">{char}</span>')
     if not parts:
         return ""
-    return f'<span class="mk-label">parts</span> {" · ".join(parts)}'
+    return " · ".join(parts)
 
 
 def _escape(value) -> str:
@@ -445,13 +467,13 @@ CARD_CSS = f"""
   color: {WORD_COLOR};
   font-size: {WORD_FONT_SIZE}px;
   line-height: 1.16;
-  font-weight: 500;
+  font-weight: 600;
 }}
 
 .mk-reading {{
   color: {READING_COLOR};
   font-size: {READING_FONT_SIZE}px;
-  font-weight: 700;
+  font-weight: 500;
 }}
 
 .mk-meta-row {{
@@ -471,8 +493,8 @@ CARD_CSS = f"""
 }}
 
 .mk-label {{
-  color: {META_LABEL_COLOR};
-  font-weight: 800;
+  color: {DECONJ_COLOR};
+  font-weight: 700;
 }}
 
 .mk-deconj {{
@@ -492,7 +514,9 @@ CARD_CSS = f"""
 
 .mk-sense-number {{
   color: {SENSE_NUMBER_COLOR};
-  font-weight: 800;
+  display: inline-block;
+  font-weight: 600;
+  min-width: 14px;
 }}
 
 .mk-kanji-section {{
@@ -506,7 +530,7 @@ CARD_CSS = f"""
   margin-top: 8px;
   padding: 8px;
   background: rgba(139, 216, 255, 0.05);
-  border: 1px solid rgba(139, 216, 255, 0.13);
+  border: 1px solid rgba(237, 241, 247, 0.09);
   border-radius: 10px;
 }}
 
@@ -516,7 +540,7 @@ CARD_CSS = f"""
 
 .mk-kanji-glyph {{
   flex: 0 0 48px;
-  height: 52px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -536,7 +560,7 @@ CARD_CSS = f"""
 
 .mk-kanji-reading {{
   color: {READING_COLOR};
-  font-size: {READING_FONT_SIZE}px;
+  font-size: {KANJI_READING_FONT_SIZE}px;
   font-weight: 700;
 }}
 
@@ -545,19 +569,44 @@ CARD_CSS = f"""
   font-size: {DEFINITION_FONT_SIZE}px;
 }}
 
+.mk-kanji-reading + .mk-kanji-meanings {{
+  margin-top: {KANJI_BODY_ROW_GAP}px;
+}}
+
+.mk-kanji-detail-group {{
+  margin-top: {KANJI_DETAIL_TOP_GAP}px;
+}}
+
 .mk-kanji-detail {{
-  margin-top: 2px;
+  align-items: flex-start;
   color: {MUTED_COLOR};
+  display: flex;
   font-size: {DETAIL_FONT_SIZE}px;
+  gap: {KANJI_DETAIL_LABEL_GAP}px;
+  line-height: {KANJI_DETAIL_LINE_HEIGHT:.2f};
+}}
+
+.mk-kanji-detail + .mk-kanji-detail {{
+  margin-top: {KANJI_DETAIL_ROW_GAP}px;
+}}
+
+.mk-kanji-detail-label {{
+  color: {META_LABEL_COLOR};
+  flex: 0 0 {KANJI_DETAIL_LABEL_WIDTH}px;
+  font-weight: 600;
+}}
+
+.mk-kanji-detail-body {{
+  min-width: 0;
 }}
 
 .mk-kanji-example-word,
 .mk-component-char {{
-  color: {WORD_COLOR};
-  font-weight: 700;
+  color: {DETAIL_WORD_COLOR};
+  font-weight: 600;
 }}
 
 .mk-kanji-example-reading {{
-  color: {READING_COLOR};
+  color: {DETAIL_READING_COLOR};
 }}
 """.strip()
