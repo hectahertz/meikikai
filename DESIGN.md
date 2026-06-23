@@ -120,7 +120,7 @@ The reader is looking away from the popup most of the time, then glances for one
 - Width: 496 px. This keeps long English glosses readable without covering too much screen content.
 - Inset: 12 px horizontal, 10 px top, 14 px bottom.
 - Surface: tinted near-black with 246 alpha and a quiet 1 px outline. Do not use pure black.
-- Accent vocabulary: cyan for written forms and glyphs, green for readings, warm muted gold for deconjugation. Accent is semantic, not decoration.
+- Theme palettes: Nazeka keeps the Meikipop/MeikiKai default lineage, while Nord, Catppuccin, and Kanagawa Wave are VS Code-inspired dark palettes. Nord is the default. Each keeps the same semantic roles: cool accent for written forms and glyphs, green accent for readings, warm muted gold/yellow for deconjugation. Accent is semantic, not decoration.
 - Text: definitions are near-white; metadata and sense numbers are muted so the word and glosses remain primary.
 - Detail accents: kanji examples and components use quieter cyan/green variants than primary expression and reading text.
 - Type: Hiragino Sans as the popup base family, with SF Pro Text and common Japanese fallbacks in QSS.

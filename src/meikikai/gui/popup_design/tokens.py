@@ -5,7 +5,7 @@ cursor anchoring, dense Japanese dictionary content, and quick visual parsing.
 Keep these tokens separate from ``meikikai.gui.design`` dialog tokens.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 Rgb = tuple[int, int, int]
 
@@ -137,4 +137,96 @@ class PopupTokens:
         )
 
 
-POPUP = PopupTokens()
+POPUP_THEME_LABELS = {
+    "nazeka": "Nazeka",
+    "nord": "Nord",
+    "catppuccin": "Catppuccin",
+    "kanagawa_wave": "Kanagawa Wave",
+}
+POPUP_THEME_OPTIONS = tuple(POPUP_THEME_LABELS)
+DEFAULT_POPUP_THEME = "nord"
+
+_BASE_POPUP = PopupTokens()
+
+# Palette inspirations:
+# - Nazeka: Meikipop's original/default theme, adapted to MeikiKai's denser popup system.
+# - Nord: Polar Night neutrals, Frost cyan-blue, Aurora green and yellow.
+# - Catppuccin Mocha: base/mantle neutrals with sky, green, mauve, and yellow accents.
+# - Kanagawa Wave: sumi ink neutrals with crystal blue, spring green, carp yellow, and wave aqua.
+POPUP_THEMES: dict[str, PopupTokens] = {
+    "nazeka": _BASE_POPUP,
+    "nord": replace(
+        _BASE_POPUP,
+        surface_bg=rgba((46, 52, 64), 246),
+        surface_border=rgba((216, 222, 233), 34),
+        text="#eceff4",
+        definition_text="#e5e9f0",
+        muted_text="#a8b1c2",
+        word_text="#88c0d0",
+        reading_text="#a3be8c",
+        separator=rgba((216, 222, 233), 23),
+        metadata_text="#9aa7b8",
+        metadata_label_text="#7f8da3",
+        omission_text="#8794a8",
+        deconjugation_text="#ebcb8b",
+        sense_number_text="#81a1c1",
+        detail_word_text="#8fbcbb",
+        detail_reading_text="#a3be8c",
+        kanji_card_bg=rgba((136, 192, 208), 13),
+        kanji_card_border=rgba((216, 222, 233), 25),
+        kanji_glyph_bg=rgba((136, 192, 208), 19),
+    ),
+    "catppuccin": replace(
+        _BASE_POPUP,
+        surface_bg=rgba((30, 30, 46), 246),
+        surface_border=rgba((205, 214, 244), 34),
+        text="#cdd6f4",
+        definition_text="#cdd6f4",
+        muted_text="#a6adc8",
+        word_text="#89dceb",
+        reading_text="#a6e3a1",
+        separator=rgba((205, 214, 244), 23),
+        metadata_text="#bac2de",
+        metadata_label_text="#9399b2",
+        omission_text="#9399b2",
+        deconjugation_text="#f9e2af",
+        sense_number_text="#cba6f7",
+        detail_word_text="#74c7ec",
+        detail_reading_text="#94e2d5",
+        kanji_card_bg=rgba((137, 220, 235), 13),
+        kanji_card_border=rgba((205, 214, 244), 25),
+        kanji_glyph_bg=rgba((137, 220, 235), 19),
+    ),
+    "kanagawa_wave": replace(
+        _BASE_POPUP,
+        surface_bg=rgba((31, 31, 40), 246),
+        surface_border=rgba((220, 215, 186), 32),
+        text="#dcd7ba",
+        definition_text="#dcd7ba",
+        muted_text="#a6a69c",
+        word_text="#7e9cd8",
+        reading_text="#98bb6c",
+        separator=rgba((220, 215, 186), 22),
+        metadata_text="#a6a69c",
+        metadata_label_text="#7e8294",
+        omission_text="#8c8a82",
+        deconjugation_text="#e6c384",
+        sense_number_text="#7aa89f",
+        detail_word_text="#7aa89f",
+        detail_reading_text="#98bb6c",
+        kanji_card_bg=rgba((126, 156, 216), 13),
+        kanji_card_border=rgba((220, 215, 186), 24),
+        kanji_glyph_bg=rgba((126, 156, 216), 18),
+    ),
+}
+
+
+def popup_tokens(theme: str | None = None) -> PopupTokens:
+    return POPUP_THEMES.get(theme or DEFAULT_POPUP_THEME, POPUP_THEMES[DEFAULT_POPUP_THEME])
+
+
+def popup_theme_label(theme: str) -> str:
+    return POPUP_THEME_LABELS.get(theme, POPUP_THEME_LABELS[DEFAULT_POPUP_THEME])
+
+
+POPUP = popup_tokens(DEFAULT_POPUP_THEME)

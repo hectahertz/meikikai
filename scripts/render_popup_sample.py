@@ -23,14 +23,23 @@ from PyQt6.QtWidgets import QApplication  # noqa: E402
 from meikikai.config.config import config  # noqa: E402
 from meikikai.dictionary.lookup import DictionaryEntry, KanjiEntry  # noqa: E402
 from meikikai.gui.popup import Popup  # noqa: E402
+from meikikai.gui.popup_design.tokens import DEFAULT_POPUP_THEME, POPUP_THEME_LABELS, POPUP_THEME_OPTIONS  # noqa: E402
 
 OUTPUT_DIR = ROOT / "design" / "popup-screenshots"
 CONTACT_SHEET = ROOT / "design" / "popup-contact-sheet.png"
 README_COMPACT = ROOT / "design" / "meikikai_popup_compact.png"
 README_STANDARD = ROOT / "design" / "meikikai_popup_standard.png"
 README_COMPLETE = ROOT / "design" / "meikikai_popup_mockup.png"
+README_THEME_ASSETS = {
+    "nazeka": ROOT / "design" / "meikikai_popup_theme_nazeka.png",
+    "nord": ROOT / "design" / "meikikai_popup_theme_nord.png",
+    "catppuccin": ROOT / "design" / "meikikai_popup_theme_catppuccin.png",
+    "kanagawa_wave": ROOT / "design" / "meikikai_popup_theme_kanagawa_wave.png",
+}
 LAYOUT_OPTIONS_DIR = OUTPUT_DIR / "layout-options"
 LAYOUT_OPTIONS_CONTACT_SHEET = LAYOUT_OPTIONS_DIR / "contact-sheet.png"
+THEME_PREVIEW_DIR = OUTPUT_DIR / "themes"
+THEME_PREVIEW_CONTACT_SHEET = THEME_PREVIEW_DIR / "contact-sheet.png"
 
 
 class DummyLock:
@@ -431,9 +440,24 @@ def render_readme_layout_assets() -> list[tuple[Path, int, int]]:
         "standard": README_STANDARD,
         "complete": README_COMPLETE,
     }
-    return _render_layout_cases(
-        cases,
-        lambda _index, layout, _entries, _senses, _glosses, _sample_name: outputs[layout],
+    original_theme = config.popup_theme
+    try:
+        config.popup_theme = DEFAULT_POPUP_THEME
+        return _render_layout_cases(
+            cases,
+            lambda _index, layout, _entries, _senses, _glosses, _sample_name: outputs[layout],
+        )
+    finally:
+        config.popup_theme = original_theme
+
+
+def render_readme_theme_assets() -> list[tuple[str, str, Path, int, int]]:
+    return _render_theme_cases(
+        [
+            (theme, "standard", 1, 2, 3, "single-kanji", mockup_entries)
+            for theme in POPUP_THEME_OPTIONS
+        ],
+        lambda _index, theme, _layout, _entries, _senses, _glosses, _sample_name: README_THEME_ASSETS[theme],
     )
 
 
@@ -467,6 +491,134 @@ def render_layout_options(
     return images
 
 
+def theme_preview_cases():
+    layout_cases = [
+        ("compact", 1, 2, 2, "single-kanji", mockup_entries),
+        ("standard", 1, 2, 3, "single-kanji", mockup_entries),
+        ("complete", 2, 3, 4, "single-kanji", mockup_entries),
+    ]
+    return [
+        (theme, layout, entries, senses, glosses, sample_name, factory)
+        for theme in POPUP_THEME_OPTIONS
+        for layout, entries, senses, glosses, sample_name, factory in layout_cases
+    ]
+
+
+def _render_theme_cases(cases, output_for_case) -> list[tuple[str, str, Path, int, int]]:
+    original = (
+        config.popup_theme,
+        config.popup_layout,
+        config.popup_vocab_entries,
+        config.popup_senses_per_entry,
+        config.popup_glosses_per_sense,
+    )
+    rendered = []
+    try:
+        for index, (theme, layout, entries, senses, glosses, sample_name, factory) in enumerate(cases, 1):
+            config.popup_theme = theme
+            config.popup_layout = layout
+            config.popup_vocab_entries = entries
+            config.popup_senses_per_entry = senses
+            config.popup_glosses_per_sense = glosses
+            output = output_for_case(index, theme, layout, entries, senses, glosses, sample_name)
+            width, height = render(factory(), output)
+            rendered.append((theme, layout, output, width, height))
+    finally:
+        (
+            config.popup_theme,
+            config.popup_layout,
+            config.popup_vocab_entries,
+            config.popup_senses_per_entry,
+            config.popup_glosses_per_sense,
+        ) = original
+    return rendered
+
+
+def make_theme_contact_sheet(items: list[tuple[str, str, Path, int, int]], output: Path) -> None:
+    if not items:
+        raise RuntimeError("No popup theme screenshots were rendered.")
+
+    loaded = {
+        (theme, layout): (path, Image.open(path).convert("RGBA"), width, height)
+        for theme, layout, path, width, height in items
+    }
+    themes = list(POPUP_THEME_OPTIONS)
+    layouts = ["compact", "standard", "complete"]
+
+    label_font = _font(14, bold=True)
+    header_font = _font(13, bold=True)
+    meta_font = _font(11)
+    page_bg = (32, 33, 39, 255)
+    tile_bg = (38, 39, 47, 255)
+    text = (238, 242, 247, 255)
+    muted = (170, 179, 194, 255)
+
+    margin = 20
+    gutter = 18
+    theme_label_w = 124
+    header_h = 28
+    label_h = 34
+    inner_pad = 10
+
+    column_widths = []
+    for layout in layouts:
+        widths = [loaded[(theme, layout)][1].width for theme in themes if (theme, layout) in loaded]
+        column_widths.append(max(widths, default=0) + inner_pad * 2)
+
+    row_heights = []
+    for theme in themes:
+        heights = [loaded[(theme, layout)][1].height for layout in layouts if (theme, layout) in loaded]
+        row_heights.append(label_h + max(heights, default=0) + inner_pad * 2)
+
+    sheet_w = margin * 2 + theme_label_w + gutter + sum(column_widths) + gutter * (len(layouts) - 1)
+    sheet_h = margin * 2 + header_h + sum(row_heights) + gutter * (len(themes) - 1)
+    sheet = Image.new("RGBA", (sheet_w, sheet_h), page_bg)
+    draw = ImageDraw.Draw(sheet)
+
+    x = margin + theme_label_w + gutter
+    for layout, column_width in zip(layouts, column_widths):
+        draw.text((x, margin + 2), layout.title(), fill=text, font=header_font)
+        x += column_width + gutter
+
+    y = margin + header_h
+    for theme, row_height in zip(themes, row_heights):
+        theme_label = POPUP_THEME_LABELS[theme]
+        draw.text((margin, y + 2), theme_label, fill=text, font=label_font)
+        subtitle = "default palette" if theme == DEFAULT_POPUP_THEME else "popup palette"
+        draw.text((margin, y + 18), subtitle, fill=muted, font=meta_font)
+
+        x = margin + theme_label_w + gutter
+        for layout, column_width in zip(layouts, column_widths):
+            path, image, width, height = loaded[(theme, layout)]
+            draw.text((x, y), layout.title(), fill=text, font=label_font)
+            draw.text((x, y + 16), f"{width} × {height}px", fill=muted, font=meta_font)
+
+            tile_y = y + label_h
+            draw.rectangle((x, tile_y, x + column_width, tile_y + row_height - label_h), fill=tile_bg)
+            image_x = x + (column_width - image.width) // 2
+            image_y = tile_y + inner_pad
+            sheet.alpha_composite(image, (image_x, image_y))
+            x += column_width + gutter
+        y += row_height + gutter
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    sheet.convert("RGB").save(output)
+
+
+def render_theme_previews(
+    output_dir: Path = THEME_PREVIEW_DIR,
+    contact_sheet: Path = THEME_PREVIEW_CONTACT_SHEET,
+) -> list[Path]:
+    rendered = _render_theme_cases(
+        theme_preview_cases(),
+        lambda index, theme, layout, _entries, _senses, _glosses, sample_name: output_dir / (
+            f"{index:02d}-{theme.replace('_', '-')}-{layout}-{sample_name}.png"
+        ),
+    )
+    make_theme_contact_sheet(rendered, contact_sheet)
+    return [image for _theme, _layout, image, _width, _height in rendered]
+
+
 def _sample_by_key(key: str) -> PopupSample:
     for sample in samples():
         if sample.key == key:
@@ -479,7 +631,18 @@ def main() -> int:
     parser.add_argument(
         "case",
         nargs="?",
-        choices=("all", "mockup", "long", "switch", "tall", "nature", "readme-layouts", "layout-options"),
+        choices=(
+            "all",
+            "mockup",
+            "long",
+            "switch",
+            "tall",
+            "nature",
+            "readme-layouts",
+            "readme-themes",
+            "layout-options",
+            "themes",
+        ),
         default="all",
         help="Sample state to render. Default: all review states and a contact sheet.",
     )
@@ -501,10 +664,24 @@ def main() -> int:
             print(f"{image.relative_to(ROOT)} ({width}x{height})")
         return 0
 
+    if args.case == "readme-themes":
+        for theme, _layout, image, width, height in render_readme_theme_assets():
+            print(f"{image.relative_to(ROOT)} ({POPUP_THEME_LABELS[theme]}, {width}x{height})")
+        return 0
+
     if args.case == "layout-options":
         output_dir = args.output_dir if args.output_dir != OUTPUT_DIR else LAYOUT_OPTIONS_DIR
         contact_sheet = args.contact_sheet if args.contact_sheet != CONTACT_SHEET else output_dir / "contact-sheet.png"
         rendered = render_layout_options(output_dir, contact_sheet, columns=args.columns or 3)
+        for image in rendered:
+            print(image.relative_to(ROOT))
+        print(contact_sheet.relative_to(ROOT))
+        return 0
+
+    if args.case == "themes":
+        output_dir = args.output_dir if args.output_dir != OUTPUT_DIR else THEME_PREVIEW_DIR
+        contact_sheet = args.contact_sheet if args.contact_sheet != CONTACT_SHEET else output_dir / "contact-sheet.png"
+        rendered = render_theme_previews(output_dir, contact_sheet)
         for image in rendered:
             print(image.relative_to(ROOT))
         print(contact_sheet.relative_to(ROOT))

@@ -26,6 +26,7 @@ from meikikai.config.config import (
     POPUP_VOCAB_ENTRIES_OPTIONS,
     config,
 )
+from meikikai.gui.popup_design.tokens import DEFAULT_POPUP_THEME, POPUP_THEME_LABELS, popup_theme_label
 from meikikai.gui.design import DIALOG, apply_dialog_style, dialog_title, separator, set_button_variant
 from meikikai.gui.popup import Popup
 from meikikai.gui.screen_ai_setup_dialog import ScreenAiSetupDialog
@@ -129,6 +130,12 @@ class SettingsDialog(QDialog):
             "Minimum time between OCR scans\nCan reduce system load, but worsens perceived latency")
         self._prepare_numeric_control(self.auto_scan_interval_spin, 76)
 
+        self.popup_theme_map = {label: key for key, label in POPUP_THEME_LABELS.items()}
+        self.popup_theme_combo = QComboBox()
+        self.popup_theme_combo.addItems(list(self.popup_theme_map.keys()))
+        self.popup_theme_combo.setCurrentText(popup_theme_label(config.popup_theme))
+        self._prepare_popup_control(self.popup_theme_combo)
+
         self.popup_layout_map = {
             "Compact": "compact",
             "Standard": "standard",
@@ -208,6 +215,11 @@ class SettingsDialog(QDialog):
         main_layout.addWidget(self._section(
             "Popup",
             [
+                self._setting_row(
+                    "Popup theme",
+                    "Changes the popup palette while preserving layout and typography.",
+                    self.popup_theme_combo,
+                ),
                 self._setting_row(
                     "Popup layout",
                     "Controls spacing, metadata shape, and kanji shape.",
@@ -460,6 +472,9 @@ class SettingsDialog(QDialog):
     def save_and_accept(self):
         config.max_lookup_length = self.max_lookup_spin.value()
         config.auto_scan_interval_seconds = self.auto_scan_interval_spin.value()
+
+        selected_theme_name = self.popup_theme_combo.currentText()
+        config.popup_theme = self.popup_theme_map.get(selected_theme_name, DEFAULT_POPUP_THEME)
 
         selected_layout_name = self.popup_layout_combo.currentText()
         config.popup_layout = self.popup_layout_map.get(selected_layout_name, "complete")

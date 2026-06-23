@@ -11,8 +11,8 @@ Forked from [rtr46/meikipop](https://github.com/rtr46/meikipop).
 ## MeikiKai highlights
 
 - **Dark redesigned popup** with kanji cards, frequency, tags, and deconjugation details.
-- **Configurable popup layouts** for compact, balanced, or complete dictionary detail.
-- **Cleaner settings window** for lookup, scanning, popup layout, popup placement, and AnkiConnect.
+- **Configurable popup themes and layouts** for compact, balanced, or complete dictionary detail.
+- **Cleaner settings window** for lookup, scanning, popup theme/layout, popup placement, and AnkiConnect.
 - **macOS-only app flow** with menu bar controls and fullscreen/Spaces-friendly popup behavior.
 - **One-display or all-displays scanning** from the menu bar.
 - **Optional media auto-pause** while dictionary results are visible.
@@ -35,6 +35,25 @@ Choose how much structure the popup uses without shrinking the core text scale. 
   </tr>
 </table>
 
+## Popup themes
+
+Nord is the default popup theme. Nazeka keeps the Meikipop/MeikiKai default lineage, while Catppuccin and Kanagawa Wave provide softer editor-inspired alternatives.
+
+<table>
+  <tr>
+    <th>Nazeka</th>
+    <th>Nord (default)</th>
+    <th>Catppuccin</th>
+    <th>Kanagawa Wave</th>
+  </tr>
+  <tr>
+    <td><img width="240" alt="MeikiKai Nazeka popup theme" src="design/meikikai_popup_theme_nazeka.png"></td>
+    <td><img width="240" alt="MeikiKai Nord popup theme" src="design/meikikai_popup_theme_nord.png"></td>
+    <td><img width="240" alt="MeikiKai Catppuccin popup theme" src="design/meikikai_popup_theme_catppuccin.png"></td>
+    <td><img width="240" alt="MeikiKai Kanagawa Wave popup theme" src="design/meikikai_popup_theme_kanagawa_wave.png"></td>
+  </tr>
+</table>
+
 ## Direct Anki export
 
 Create Anki recognition cards from the visible top vocabulary entry, with popup-style details and optional cropped screenshots.
@@ -51,7 +70,8 @@ Create Anki recognition cards from the visible top vocabulary entry, with popup-
 - Supports horizontal and vertical Japanese text.
 - Looks up vocabulary with JMdict-style senses, deconjugation, frequency rank, part-of-speech, and tags.
 - Shows kanji details, readings, meanings, examples, and components.
-- Lets you choose Compact, Standard, or Complete popup layout, plus visible entries, senses, and glosses independently.
+- Lets you choose Nazeka, Nord, Catppuccin, or Kanagawa Wave themes, plus Compact, Standard, or Complete popup layout.
+- Lets you set visible entries, senses, and glosses independently.
 - Imports Yomitan/Yomichan dictionaries.
 - Scans one selected display or all displays.
 - Stays visible across macOS Spaces and fullscreen apps.
@@ -111,6 +131,7 @@ Settings are saved to `~/Library/Application Support/meikikai/config.ini`.
 
 - **Maximum lookup length**: how many OCR characters are kept before dictionary lookup.
 - **Scan cooldown**: minimum delay between OCR scans.
+- **Popup theme**: choose Nazeka, Nord, Catppuccin, or Kanagawa Wave. Nord is the default.
 - **Popup layout**: choose Compact, Standard, or Complete. Complete preserves the full default popup.
 - **Entries shown**: choose how many vocabulary entries appear before the omitted-entry footer.
 - **Senses per entry**: choose how many numbered definition groups appear for each vocabulary entry.
@@ -163,12 +184,19 @@ Regenerate the README popup images:
 
 ```bash
 .venv/bin/python scripts/render_popup_sample.py readme-layouts
+.venv/bin/python scripts/render_popup_sample.py readme-themes
 ```
 
 Render popup layout option samples and contact sheet for UI review:
 
 ```bash
 .venv/bin/python scripts/render_popup_sample.py layout-options
+```
+
+Render popup theme previews with Compact, Standard, and Complete samples:
+
+```bash
+.venv/bin/python scripts/render_popup_sample.py themes
 ```
 
 Render Anki card samples for UI review:

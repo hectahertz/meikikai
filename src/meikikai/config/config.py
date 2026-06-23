@@ -4,6 +4,7 @@ import logging
 import sys
 
 from meikikai._version import __version__
+from meikikai.gui.popup_design.tokens import DEFAULT_POPUP_THEME, POPUP_THEME_OPTIONS
 from meikikai.utils.paths import paths
 
 logger = logging.getLogger(__name__)
@@ -34,6 +35,7 @@ class Config:
             'auto_scan_interval_seconds': 0.5,
             'auto_pause_media': False,
             'popup_position_mode': 'visual_novel_mode',
+            'popup_theme': DEFAULT_POPUP_THEME,
             'popup_layout': 'complete',
             'popup_vocab_entries': 3,
             'popup_senses_per_entry': 3,
@@ -72,6 +74,8 @@ class Config:
                     val = default
                 if key == 'auto_scan_interval_seconds':
                     val = max(MIN_AUTO_SCAN_INTERVAL_SECONDS, val)
+                elif key == 'popup_theme' and val not in POPUP_THEME_OPTIONS:
+                    val = default
                 elif key == 'popup_layout' and val not in POPUP_LAYOUT_OPTIONS:
                     val = default
                 elif key == 'popup_vocab_entries' and val not in POPUP_VOCAB_ENTRIES_OPTIONS:
