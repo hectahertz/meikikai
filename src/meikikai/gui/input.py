@@ -23,10 +23,10 @@ MEDIA_REMOTE_OSASCRIPT_TIMEOUT_SECONDS = 0.35
 
 MR_COMMAND_PLAY = 0
 MR_COMMAND_PAUSE = 1
+MACOS_KEYCODE_A = 0
+MACOS_KEYCODE_S = 1
 MACOS_KEYCODE_C = 8
 MACOS_KEYCODE_J = 38
-MACOS_KEYCODE_M = 46
-MACOS_KEYCODE_P = 35
 
 _MEDIA_REMOTE_UNAVAILABLE = object()
 _media_remote_framework = None
@@ -171,10 +171,10 @@ def pause_macos_media_if_playing() -> bool:
 
 
 class GlobalHotkeyListener:
-    ANKI_HOTKEY_LABEL = "Ctrl+Shift+M"
-    COPY_HOTKEY_LABEL = "Ctrl+Shift+C"
-    JISHO_HOTKEY_LABEL = "Ctrl+Shift+J"
-    SPEECH_HOTKEY_LABEL = "Ctrl+Shift+P"
+    ANKI_HOTKEY_LABEL = "A"
+    COPY_HOTKEY_LABEL = "C"
+    JISHO_HOTKEY_LABEL = "J"
+    SPEECH_HOTKEY_LABEL = "S"
 
     def __init__(self, on_anki_export, on_copy_to_clipboard, on_jisho_search, on_speak_entry):
         self.on_anki_export = on_anki_export
@@ -257,7 +257,7 @@ class GlobalHotkeyListener:
 
         try:
             keycode = Quartz.CGEventGetIntegerValueField(event, Quartz.kCGKeyboardEventKeycode)
-            if keycode not in (MACOS_KEYCODE_C, MACOS_KEYCODE_J, MACOS_KEYCODE_M, MACOS_KEYCODE_P):
+            if keycode not in (MACOS_KEYCODE_A, MACOS_KEYCODE_C, MACOS_KEYCODE_J, MACOS_KEYCODE_S):
                 return event
 
             if event_type == Quartz.kCGEventKeyUp and keycode in self._hotkeys_down:
@@ -270,7 +270,7 @@ class GlobalHotkeyListener:
             if keycode in self._hotkeys_down:
                 return None
 
-            if not self._has_ctrl_shift(event):
+            if self._has_action_modifier(event):
                 return event
 
             if not self._handle_hotkey(keycode):
@@ -282,22 +282,25 @@ class GlobalHotkeyListener:
             logger.exception("Global hotkey handler failed.")
             return None
 
-    def _has_ctrl_shift(self, event) -> bool:
+    def _has_action_modifier(self, event) -> bool:
         flags = Quartz.CGEventGetFlags(event)
-        return bool(
-            flags & Quartz.kCGEventFlagMaskControl
-            and flags & Quartz.kCGEventFlagMaskShift
+        action_modifiers = (
+            Quartz.kCGEventFlagMaskCommand
+            | Quartz.kCGEventFlagMaskControl
+            | Quartz.kCGEventFlagMaskAlternate
+            | Quartz.kCGEventFlagMaskShift
         )
+        return bool(flags & action_modifiers)
 
     def _handle_hotkey(self, keycode):
         try:
-            if keycode == MACOS_KEYCODE_M:
+            if keycode == MACOS_KEYCODE_A:
                 return bool(self.on_anki_export())
             if keycode == MACOS_KEYCODE_C:
                 return bool(self.on_copy_to_clipboard())
             if keycode == MACOS_KEYCODE_J:
                 return bool(self.on_jisho_search())
-            if keycode == MACOS_KEYCODE_P:
+            if keycode == MACOS_KEYCODE_S:
                 return bool(self.on_speak_entry())
         except Exception:
             logger.exception("Global hotkey handler failed.")

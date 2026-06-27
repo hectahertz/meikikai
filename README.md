@@ -109,10 +109,10 @@ On first run:
 
 | Shortcut | Action |
 | --- | --- |
-| `Ctrl+Shift+C` | Copy the top visible vocabulary expression. |
-| `Ctrl+Shift+J` | Open a Jisho.org search for the top visible vocabulary expression. |
-| `Ctrl+Shift+P` | Speak the top visible vocabulary reading or expression when Speech is enabled. |
-| `Ctrl+Shift+M` | Export the top visible vocabulary entry to Anki. |
+| `C` | Copy the top visible vocabulary expression. |
+| `J` | Open a Jisho.org search for the top visible vocabulary expression. |
+| `S` | Speak the top visible vocabulary reading or expression when Speech is enabled. |
+| `A` | Export the top visible vocabulary entry to Anki. |
 
 The menu bar icon provides pause, media auto-pause, settings, scan-screen selection, and quit.
 
@@ -124,13 +124,13 @@ Settings are saved to `~/Library/Application Support/meikikai/config.ini` and or
 - **Popup**: theme, layout, entries shown, senses per entry, glosses per sense, and placement around the cursor.
 - **Anki**: AnkiConnect URL and whether to open the native macOS cropper before card creation.
 - **Speech**: Shortcuts TTS toggle, shortcut status, setup instructions, test voice button, and whether to attach generated audio to Anki cards.
-- **Shortcuts**: read-only reminder of the global shortcuts.
+- **Shortcuts**: read-only reminder of the popup shortcuts.
 
-For Speech, create a macOS Shortcut named `Meikikai Siri TTS` that receives Text from Shortcut Input, then add **Make Spoken Audio from Shortcut Input** as the final action. Choose the voice inside that action, and do not add **Stop and Output** after it. With Speech enabled, `Ctrl+Shift+P` speaks the visible top entry using its reading when available, otherwise its expression.
+For Speech, create a macOS Shortcut named `Meikikai Siri TTS` that receives Text from Shortcut Input, then add **Make Spoken Audio from Shortcut Input** as the final action. Choose the voice inside that action, and do not add **Stop and Output** after it. With Speech enabled, `S` speaks the visible top entry using its reading when available, otherwise its expression.
 
 ## Anki export
 
-MeikiKai can create recognition cards through AnkiConnect from the top visible vocabulary entry. Install AnkiConnect, keep Anki open, hover text until the popup is visible, then press `Ctrl+Shift+M`.
+MeikiKai can create recognition cards through AnkiConnect from the top visible vocabulary entry. Install AnkiConnect, keep Anki open, hover text until the popup is visible, then press `A`.
 
 <p align="center">
   <img width="496" alt="MeikiKai Anki card back example" src="design/card-back.png"><br>
@@ -204,7 +204,7 @@ Optionally set `MEIKIKAI_CODESIGN_IDENTITY` in `.env` to sign the local build wi
 - **OCR unavailable**: open Settings → OCR Engine, confirm Chrome Screen AI is installed and ready, then confirm Screen Recording permission and relaunch.
 - **Hotkeys unavailable**: confirm Accessibility permission and relaunch.
 - **Permissions look correct but behavior is broken after rebuilding/signing**: remove MeikiKai from the affected macOS permission list, add it again, then relaunch.
-- **Anki export unavailable**: open Anki with AnkiConnect enabled, then press `Ctrl+Shift+M` again.
+- **Anki export unavailable**: open Anki with AnkiConnect enabled, then press `A` while the popup is visible.
 - **Media auto-pause does nothing**: it depends on macOS Now Playing / MediaRemote support, so not every player may report or respond consistently.
 - **Need details**: check `~/Library/Logs/MeikiKai/meikikai.log`.
 

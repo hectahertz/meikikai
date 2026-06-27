@@ -439,22 +439,22 @@ class SettingsDialog(QDialog):
             ])),
             ("Shortcuts", self._tab([
                 self._section(
-                    "Global shortcuts",
+                    "Popup shortcuts",
                     [
                         self._info_row(
-                            "Ctrl+Shift+C",
+                            "C",
                             "Copy the top entry expression."
                         ),
                         self._info_row(
-                            "Ctrl+Shift+J",
+                            "J",
                             "Search the top entry on Jisho.org."
                         ),
                         self._info_row(
-                            "Ctrl+Shift+P",
+                            "S",
                             "Speak the top entry reading or expression."
                         ),
                         self._info_row(
-                            "Ctrl+Shift+M",
+                            "A",
                             "Add the top entry to Anki."
                         ),
                     ],

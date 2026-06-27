@@ -113,7 +113,7 @@ class AnkiExportWorker(threading.Thread):
             self._setup_complete = False
             self._notify(
                 "Anki unavailable",
-                "Open Anki with AnkiConnect enabled, then try Ctrl+Shift+M again.",
+                "Open Anki with AnkiConnect enabled, then press A while the popup is visible.",
                 "warning",
             )
             return

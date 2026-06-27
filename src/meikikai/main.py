@@ -240,6 +240,9 @@ def run_gui():
         return True
 
     def search_latest_on_jisho():
+        if not popup_window.is_visible or config.is_paused:
+            return False
+
         query = popup_window.get_latest_jisho_query()
         if not query:
             jisho_controller.message.emit(
@@ -253,19 +256,22 @@ def run_gui():
         return True
 
     def speak_latest_entry():
-        if not config.shortcuts_tts_enabled:
-            speech_notifier.message.emit(
-                "Speech disabled",
-                "Enable Shortcuts TTS in Settings → Speech, then Save.",
-                "warning",
-            )
-            return True
+        if not popup_window.is_visible or config.is_paused:
+            return False
 
         text = popup_window.get_latest_speech_text()
         if not text:
             speech_notifier.message.emit(
                 "Speech skipped",
                 "No visible vocabulary entry to speak.",
+                "warning",
+            )
+            return True
+
+        if not config.shortcuts_tts_enabled:
+            speech_notifier.message.emit(
+                "Speech disabled",
+                "Enable Shortcuts TTS in Settings → Speech, then Save.",
                 "warning",
             )
             return True
@@ -297,10 +303,10 @@ def run_gui():
     {APP_NAME}.{APP_VERSION} is running in the background.
 
       - To configure or change scan screen: Right-click the menu bar icon.
-      - To copy the visible top entry expression: Ctrl+Shift+C.
-      - To search the visible top entry on Jisho.org: Ctrl+Shift+J.
-      - To speak the visible top entry reading or expression: Ctrl+Shift+P.
-      - To export the visible top entry to Anki: Ctrl+Shift+M.
+      - While the popup is visible, press C to copy the top entry expression.
+      - While the popup is visible, press J to search the top entry on Jisho.org.
+      - While the popup is visible, press S to speak the top entry reading or expression.
+      - While the popup is visible, press A to export the top entry to Anki.
       - To exit: Press Ctrl+C in this terminal.
 
     --------------------------------------------------
