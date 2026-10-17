@@ -20,6 +20,9 @@ logger = logging.getLogger(__name__)
 MEDIA_REMOTE_BUNDLE_PATH = "/System/Library/PrivateFrameworks/MediaRemote.framework"
 MEDIA_REMOTE_FRAMEWORK_PATH = f"{MEDIA_REMOTE_BUNDLE_PATH}/MediaRemote"
 MEDIA_REMOTE_OSASCRIPT_TIMEOUT_SECONDS = 0.35
+MOUSE_MOVING_POLL_SECONDS = 0.01
+MOUSE_STILL_POLL_SECONDS = 0.05
+MOUSE_STILL_AFTER_SECONDS = 1.0
 
 MR_COMMAND_PLAY = 0
 MR_COMMAND_PAUSE = 1
@@ -313,10 +316,12 @@ class InputLoop(threading.Thread):
         super().__init__(daemon=True, name="InputLoop")
         self.shared_state = shared_state
         self.mouse_controller = mouse.Controller()
+        self.mouse_pos = None
 
     def run(self):
         logger.debug("Input thread started.")
         last_mouse_pos = (0, 0)
+        last_mouse_move_time = 0.0
         self.shared_state.screenshot_trigger_event.set()
 
         while self.shared_state.running:
@@ -325,16 +330,21 @@ class InputLoop(threading.Thread):
                 continue
             try:
                 current_mouse_pos = self.mouse_controller.position
+                self.mouse_pos = current_mouse_pos
 
                 # trigger hit_scans + lookups
                 if current_mouse_pos != last_mouse_pos:
                     self.shared_state.hit_scan_queue.trigger()
+                    last_mouse_move_time = time.perf_counter()
 
                 last_mouse_pos = current_mouse_pos
             except:
                 logger.exception("An unexpected error occurred in the input loop. Continuing...")
             finally:
-                time.sleep(0.01)
+                if time.perf_counter() - last_mouse_move_time < MOUSE_STILL_AFTER_SECONDS:
+                    time.sleep(MOUSE_MOVING_POLL_SECONDS)
+                else:
+                    time.sleep(MOUSE_STILL_POLL_SECONDS)
         logger.debug("Input thread stopped.")
 
     @staticmethod

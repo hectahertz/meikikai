@@ -7,7 +7,7 @@ from ctypes import c_void_p
 from html import escape
 from typing import List, Optional
 
-from PyQt6.QtCore import QTimer, QPoint, QRect, QSize
+from PyQt6.QtCore import QTimer, QPoint, QRect, QSize, pyqtSignal
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QCursor, QFont, QTextBlockFormat, QTextCursor
 from PyQt6.QtWidgets import (
@@ -60,6 +60,9 @@ except ImportError:
     NSWindowCollectionBehaviorTransient = None
 
 logger = logging.getLogger(__name__)
+
+VISIBLE_POLL_INTERVAL_MS = 10
+HIDDEN_POLL_INTERVAL_MS = 100
 
 class FlowLayout(QLayout):
     def __init__(self, parent=None, h_spacing=7, v_spacing=5):
@@ -164,6 +167,8 @@ class FlowLayout(QLayout):
 
 
 class Popup(QWidget):
+    latest_data_ready = pyqtSignal()
+
     def __init__(self, shared_state):
         super().__init__()
         self._latest_data = None
@@ -181,7 +186,8 @@ class Popup(QWidget):
         self.is_visible = False
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.process_latest_data_loop)
-        self.timer.start(10)
+        self.timer.start(HIDDEN_POLL_INTERVAL_MS)
+        self.latest_data_ready.connect(self.process_latest_data_loop)
 
         base_font = QFont(self._tokens.font_family)
         base_font.setPixelSize(self._tokens.definition_font_size)
@@ -281,6 +287,7 @@ class Popup(QWidget):
     def set_latest_data(self, data):
         with self._data_lock:
             self._latest_data = data
+        self.latest_data_ready.emit()
 
     def get_latest_data(self):
         with self._data_lock:
@@ -1134,6 +1141,7 @@ class Popup(QWidget):
             return
 
         self.is_visible = False
+        self.timer.setInterval(HIDDEN_POLL_INTERVAL_MS)
         self._resume_auto_paused_media()
         QTimer.singleShot(50, lambda: self._release_lock_safely())
         if self._suppress_next_focus_restore:
@@ -1160,6 +1168,7 @@ class Popup(QWidget):
 
         self._pause_media_for_popup()
         self.is_visible = True
+        self.timer.setInterval(VISIBLE_POLL_INTERVAL_MS)
         self.show()
         self.raise_()
         self._configure_macos_window()

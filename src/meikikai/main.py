@@ -154,7 +154,7 @@ def run_gui():
     input_loop = InputLoop(shared_state)
     popup_window = Popup(shared_state)
 
-    screen_manager = ScreenManager(shared_state)
+    screen_manager = ScreenManager(shared_state, input_loop)
     lookup = Lookup(shared_state, popup_window)  # load dictionary
 
     ocr_processor = OcrProcessor(shared_state)
