@@ -18,17 +18,25 @@ def popup_frame_stylesheet(tokens: PopupTokens = POPUP) -> str:
     """
 
 
-def plain_label_stylesheet(color: str, tokens: PopupTokens = POPUP) -> str:
+def plain_label_stylesheet(color: str, tokens: PopupTokens = POPUP, font_stack: str | None = None, italic: bool = False) -> str:
     return (
         f"color: {color}; background: transparent; border: none; "
-        f"font-family: {tokens.font_stack_qss};"
+        f"font-family: {font_stack or tokens.font_stack_qss};"
+        f"{' font-style: italic;' if italic else ''}"
     )
 
 
-def rich_label_stylesheet(color: str, size: int, tokens: PopupTokens = POPUP) -> str:
+def rich_label_stylesheet(
+    color: str,
+    size: int,
+    tokens: PopupTokens = POPUP,
+    font_stack: str | None = None,
+    italic: bool = False,
+) -> str:
     return (
         f"color: {color}; background: transparent; border: none; "
-        f"font-family: {tokens.font_stack_qss}; font-size: {size}px;"
+        f"font-family: {font_stack or tokens.font_stack_qss}; font-size: {size}px;"
+        f"{' font-style: italic;' if italic else ''}"
     )
 
 
@@ -37,11 +45,13 @@ def separator_stylesheet(tokens: PopupTokens = POPUP) -> str:
 
 
 def kanji_card_stylesheet(tokens: PopupTokens = POPUP) -> str:
+    rule = f"border-left: 2px solid {tokens.kanji_card_rule};" if tokens.kanji_card_rule else ""
     return f"""
         QFrame#kanjiCard {{
             background-color: {tokens.kanji_card_bg};
             border: 1px solid {tokens.kanji_card_border};
             border-radius: {tokens.kanji_card_radius}px;
+            {rule}
         }}
     """
 

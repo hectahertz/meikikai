@@ -484,11 +484,34 @@ class Popup(QWidget):
     def _join_escaped(self, values, separator=", ") -> str:
         return separator.join(self._escape(value) for value in values if value)
 
-    def _font(self, size: int, weight: QFont.Weight = QFont.Weight.Normal) -> QFont:
-        font = QFont(self._tokens.font_family)
+    def _font(self, size: int, weight: QFont.Weight = QFont.Weight.Normal, role: str = "ui") -> QFont:
+        family, _font_stack, italic = self._font_role(role)
+        font = QFont(family)
         font.setPixelSize(size)
         font.setWeight(weight)
+        font.setItalic(italic)
         return font
+
+    def _font_role(self, role: str) -> tuple[str, str, bool]:
+        if role == "jp":
+            return self._tokens.jp_font_family, self._tokens.jp_font_stack_qss, False
+        if role == "gloss":
+            return self._tokens.gloss_font_family, self._tokens.gloss_font_stack_qss, self._tokens.gloss_italic
+        return self._tokens.font_family, self._tokens.font_stack_qss, False
+
+    def _reading_text(self, reading: str) -> str:
+        return f"[{reading}]" if self._tokens.reading_brackets else reading
+
+    def _label_text(self, text: str) -> str:
+        return text.upper() if self._tokens.uppercase_labels else text
+
+    def _jp_family_css(self) -> str:
+        if self._tokens.jp_font_stack_qss == self._tokens.font_stack_qss:
+            return ""
+        return f" font-family:{self._tokens.jp_font_stack_qss};"
+
+    def _detail_label_color(self) -> str:
+        return self._tokens.detail_label_text or self._tokens.metadata_label_text
 
     def _plain_label(
         self,
@@ -497,13 +520,15 @@ class Popup(QWidget):
         size: int,
         weight: QFont.Weight = QFont.Weight.Normal,
         max_width: int | None = None,
+        role: str = "ui",
     ) -> QLabel:
         if max_width is None:
             max_width = self._content_width()
+        _family, font_stack, italic = self._font_role(role)
         label = QLabel(text)
         label.setTextFormat(Qt.TextFormat.PlainText)
-        label.setFont(self._font(size, weight))
-        label.setStyleSheet(plain_label_stylesheet(color, self._tokens))
+        label.setFont(self._font(size, weight, role))
+        label.setStyleSheet(plain_label_stylesheet(color, self._tokens, font_stack, italic))
         if label.sizeHint().width() > max_width:
             label.setWordWrap(True)
             label.setFixedWidth(max_width)
@@ -512,13 +537,14 @@ class Popup(QWidget):
         label.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         return label
 
-    def _rich_label(self, html: str, color: str, size: int, width: int) -> QLabel:
+    def _rich_label(self, html: str, color: str, size: int, width: int, role: str = "ui") -> QLabel:
+        _family, font_stack, italic = self._font_role(role)
         label = QLabel(html)
         label.setTextFormat(Qt.TextFormat.RichText)
         label.setWordWrap(True)
-        label.setFont(self._font(size))
+        label.setFont(self._font(size, role=role))
         label.setFixedWidth(width)
-        label.setStyleSheet(rich_label_stylesheet(color, size, self._tokens))
+        label.setStyleSheet(rich_label_stylesheet(color, size, self._tokens, font_stack, italic))
         label.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
         return label
 
@@ -599,7 +625,7 @@ class Popup(QWidget):
 
     def _deconjugation_html(self, value: str) -> str:
         return (
-            f'<span style="color:{self._tokens.deconjugation_text}; font-weight:700;">inflected</span>'
+            f'<span style="color:{self._tokens.deconjugation_text}; font-weight:700;">{self._label_text("inflected")}</span>'
             f' <span style="color:{self._tokens.metadata_label_text};">·</span> {self._escape(value)}'
         )
 
@@ -669,13 +695,13 @@ class Popup(QWidget):
                 str(index),
                 self._tokens.sense_number_text,
                 self._tokens.definition_font_size,
-                QFont.Weight.DemiBold,
+                QFont.Weight(self._tokens.sense_number_weight),
                 number_width,
             )
             number.setFixedWidth(number_width)
             number.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
             row_layout.addWidget(number, 0, Qt.AlignmentFlag.AlignTop)
-            row_layout.addWidget(self._rich_label(sense_text, self._tokens.definition_text, self._tokens.definition_font_size, text_width))
+            row_layout.addWidget(self._rich_label(sense_text, self._tokens.definition_text, self._tokens.definition_font_size, text_width, "gloss"))
             self._finalize_fixed_height(row)
             layout.addWidget(row)
 
@@ -697,14 +723,16 @@ class Popup(QWidget):
             entry.written_form,
             self._tokens.word_text,
             self._tokens.word_font_size,
-            QFont.Weight.DemiBold,
+            QFont.Weight(self._tokens.word_font_weight),
+            role="jp",
         ))
         if entry.reading:
             row_layout.addWidget(self._plain_label(
-                f"[{entry.reading}]",
+                self._reading_text(entry.reading),
                 self._tokens.reading_text,
                 self._tokens.reading_font_size,
                 QFont.Weight.Medium,
+                role="jp",
             ))
         self._finalize_flow_container(row, row_layout, content_width)
         layout.addWidget(row)
@@ -717,7 +745,10 @@ class Popup(QWidget):
             layout.addWidget(self._metadata_label(self._metadata_html(shown_metadata)))
         if shown_deconj:
             layout.addSpacing(self._tokens.entry_deconjugation_gap)
-            layout.addWidget(self._metadata_label(self._deconjugation_html(shown_deconj), color=self._tokens.deconjugation_text))
+            layout.addWidget(self._metadata_label(
+                self._deconjugation_html(shown_deconj),
+                color=self._tokens.deconjugation_detail_text or self._tokens.deconjugation_text,
+            ))
 
         definition_parts, hidden_sense_count, hidden_gloss_count = self._entry_definition_parts(entry)
         if definition_parts:
@@ -741,7 +772,11 @@ class Popup(QWidget):
         line = QFrame()
         line.setFixedHeight(1)
         line.setStyleSheet(separator_stylesheet(self._tokens))
-        layout.addWidget(line)
+        if self._tokens.separator_width:
+            line.setFixedWidth(self._tokens.separator_width)
+            layout.addWidget(line, 0, Qt.AlignmentFlag.AlignHCenter)
+        else:
+            layout.addWidget(line)
         return container
 
     def _kanji_chipline(self, entries: list[KanjiEntry]) -> QWidget:
@@ -762,15 +797,17 @@ class Popup(QWidget):
                 entry.character,
                 self._tokens.word_text,
                 self._tokens.word_font_size,
-                QFont.Weight.DemiBold,
+                QFont.Weight(self._tokens.word_font_weight),
+                role="jp",
             ))
             if entry.readings:
                 chip_layout.addWidget(self._plain_label(
-                    f"[{entry.readings[0]}]",
+                    self._reading_text(entry.readings[0]),
                     self._tokens.reading_text,
                     self._tokens.metadata_font_size,
                     QFont.Weight.DemiBold,
                     content_width,
+                    role="jp",
                 ))
             if entry.meanings:
                 chip_layout.addWidget(self._plain_label(
@@ -779,6 +816,7 @@ class Popup(QWidget):
                     self._tokens.metadata_font_size,
                     QFont.Weight.Normal,
                     content_width,
+                    role="gloss",
                 ))
             self._finalize_fixed_height(chip)
             layout.addWidget(chip)
@@ -821,13 +859,10 @@ class Popup(QWidget):
 
     def _kanji_mini_card(self, entry: KanjiEntry, width: int) -> QFrame:
         card = QFrame()
+        card.setObjectName("kanjiCard")
         card.setFixedWidth(width)
         card.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        card.setStyleSheet(
-            f"background-color: {self._tokens.kanji_card_bg}; "
-            f"border: 1px solid {self._tokens.kanji_card_border}; "
-            f"border-radius: {self._tokens.kanji_card_radius}px;"
-        )
+        card.setStyleSheet(kanji_card_stylesheet(self._tokens))
 
         layout = QHBoxLayout(card)
         layout.setContentsMargins(7, 7, 7, 7)
@@ -843,8 +878,9 @@ class Popup(QWidget):
             entry.character,
             self._tokens.word_text,
             26,
-            QFont.Weight.DemiBold,
+            QFont.Weight(self._tokens.word_font_weight),
             38,
+            role="jp",
         )
         glyph_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         glyph_layout.addWidget(glyph_label, 0, Qt.AlignmentFlag.AlignCenter)
@@ -861,14 +897,15 @@ class Popup(QWidget):
         readings = self._join_escaped(entry.readings)
         if readings:
             body_layout.addWidget(self._rich_label(
-                f'<span style="color:{self._tokens.reading_text}; font-weight:700;">[{readings}]</span>',
+                f'<span style="color:{self._tokens.reading_text}; font-weight:{self._tokens.kanji_reading_weight};">{self._reading_text(readings)}</span>',
                 self._tokens.reading_text,
                 self._tokens.metadata_font_size,
                 body_width,
+                "jp",
             ))
         meanings = self._join_escaped(entry.meanings[:3])
         if meanings:
-            body_layout.addWidget(self._rich_label(meanings, self._tokens.muted_text, self._tokens.detail_font_size, body_width))
+            body_layout.addWidget(self._rich_label(meanings, self._tokens.muted_text, self._tokens.detail_font_size, body_width, "gloss"))
 
         self._finalize_fixed_height(body)
         layout.addWidget(body, 1)
@@ -899,6 +936,7 @@ class Popup(QWidget):
             self._tokens.kanji_glyph_font_size,
             QFont.Weight.Medium,
             48,
+            role="jp",
         )
         glyph_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         glyph_layout.addWidget(glyph_label, 0, Qt.AlignmentFlag.AlignCenter)
@@ -915,17 +953,18 @@ class Popup(QWidget):
         readings = self._join_escaped(entry.readings)
         if readings:
             details_layout.addWidget(self._rich_label(
-                f'<span style="color:{self._tokens.reading_text}; font-weight:700;">[{readings}]</span>',
+                f'<span style="color:{self._tokens.reading_text}; font-weight:{self._tokens.kanji_reading_weight};">{self._reading_text(readings)}</span>',
                 self._tokens.reading_text,
                 self._tokens.kanji_reading_font_size,
                 right_width,
+                "jp",
             ))
 
         meanings = self._join_escaped(entry.meanings)
         if meanings:
             if details_layout.count() > 0:
                 details_layout.addSpacing(self._tokens.kanji_body_row_gap)
-            details_layout.addWidget(self._rich_label(meanings, self._tokens.definition_text, self._tokens.definition_font_size, right_width))
+            details_layout.addWidget(self._rich_label(meanings, self._tokens.definition_text, self._tokens.definition_font_size, right_width, "gloss"))
 
         if include_details:
             examples_html = self._kanji_examples_html(entry)
@@ -985,8 +1024,8 @@ class Popup(QWidget):
         layout.setSpacing(self._tokens.kanji_detail_label_gap)
 
         label = self._plain_label(
-            label_text,
-            self._tokens.metadata_label_text,
+            self._label_text(label_text),
+            self._detail_label_color(),
             self._tokens.detail_font_size,
             QFont.Weight.DemiBold,
             self._tokens.kanji_detail_label_width,
@@ -1027,8 +1066,8 @@ class Popup(QWidget):
             meaning = self._escape(ex.get('m', ''))
             if word or reading or meaning:
                 parts.append(
-                    f'<span style="color:{self._tokens.detail_word_text}; font-weight:600;">{word}</span> '
-                    f'<span style="color:{self._tokens.detail_reading_text};">[{reading}]</span> {meaning}'
+                    f'<span style="color:{self._tokens.detail_word_text};{self._jp_family_css()} font-weight:600;">{word}</span> '
+                    f'<span style="color:{self._tokens.detail_reading_text};{self._jp_family_css()}">{self._reading_text(reading)}</span> {meaning}'
                 )
         if not parts:
             return ""
@@ -1040,9 +1079,9 @@ class Popup(QWidget):
             char = self._escape(component.get('c', ''))
             meaning = self._escape(component.get('m', ''))
             if meaning:
-                parts.append(f'<span style="color:{self._tokens.detail_word_text}; font-weight:600;">{char}</span> {meaning}')
+                parts.append(f'<span style="color:{self._tokens.detail_word_text};{self._jp_family_css()} font-weight:600;">{char}</span> {meaning}')
             elif char:
-                parts.append(f'<span style="color:{self._tokens.detail_word_text}; font-weight:600;">{char}</span>')
+                parts.append(f'<span style="color:{self._tokens.detail_word_text};{self._jp_family_css()} font-weight:600;">{char}</span>')
         if not parts:
             return ""
         return " · ".join(parts)

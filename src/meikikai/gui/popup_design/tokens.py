@@ -35,6 +35,17 @@ class PopupLayoutTier:
 class PopupTokens:
     font_family: str = "Hiragino Sans"
     font_stack_qss: str = '"SF Pro Text", "Helvetica Neue", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif'
+    jp_font_family: str = "Hiragino Sans"
+    jp_font_stack_qss: str = '"SF Pro Text", "Helvetica Neue", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif'
+    gloss_font_family: str = "Hiragino Sans"
+    gloss_font_stack_qss: str = '"SF Pro Text", "Helvetica Neue", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif'
+    gloss_italic: bool = False
+    word_font_weight: int = 600
+    sense_number_weight: int = 600
+    kanji_reading_weight: int = 700
+    reading_brackets: bool = True
+    uppercase_labels: bool = False
+    separator_width: int = 0
 
     width: int = 496
     shadow_margin: int = 0
@@ -53,14 +64,17 @@ class PopupTokens:
     separator: str = "rgba(237, 241, 247, 22)"
     metadata_text: str = "#929cae"
     metadata_label_text: str = "#808b9f"
+    detail_label_text: str = ""
     omission_text: str = "#858fa3"
     deconjugation_text: str = "#c6b57f"
+    deconjugation_detail_text: str = ""
     sense_number_text: str = "#8b96aa"
     detail_word_text: str = "#79c9ee"
     detail_reading_text: str = "#82c78f"
 
     kanji_card_bg: str = "rgba(139, 216, 255, 12)"
     kanji_card_border: str = "rgba(237, 241, 247, 24)"
+    kanji_card_rule: str = ""
     kanji_glyph_bg: str = "rgba(139, 216, 255, 18)"
 
     surface_radius: int = 16
@@ -138,6 +152,7 @@ class PopupTokens:
 
 
 POPUP_THEME_LABELS = {
+    "paper": "Paper",
     "nazeka": "Nazeka",
     "nord": "Nord",
     "catppuccin": "Catppuccin",
@@ -153,7 +168,75 @@ _BASE_POPUP = PopupTokens()
 # - Nord: Polar Night neutrals, Frost cyan-blue, Aurora green and yellow.
 # - Catppuccin Mocha: base/mantle neutrals with sky, green, mauve, and yellow accents.
 # - Kanagawa Wave: sumi ink neutrals with crystal blue, spring green, carp yellow, and wave aqua.
+_PAPER_POPUP = replace(
+    _BASE_POPUP,
+    jp_font_family="Hiragino Mincho ProN",
+    jp_font_stack_qss='"Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif',
+    gloss_font_family="Iowan Old Style",
+    gloss_font_stack_qss='"Iowan Old Style", "Palatino", Georgia, "Hiragino Mincho ProN", serif',
+    gloss_italic=False,
+    word_font_weight=500,
+    sense_number_weight=400,
+    kanji_reading_weight=400,
+    kanji_detail_label_width=40,
+    reading_brackets=False,
+    uppercase_labels=True,
+    separator_width=40,
+    surface_radius=0,
+    kanji_card_radius=0,
+    kanji_glyph_radius=0,
+    word_font_size=24,
+    definition_font_size=14,
+    surface_bg="#f5f1ea",
+    surface_border="#e2d9cc",
+    text="#1f1c18",
+    definition_text="#1f1c18",
+    muted_text="#8a8175",
+    word_text="#1f1c18",
+    reading_text="#8a8175",
+    separator="#e2d9cc",
+    metadata_text="#8a8175",
+    metadata_label_text="#8a8175",
+    omission_text="#8a8175",
+    deconjugation_text="#b8391f",
+    deconjugation_detail_text="#8a8175",
+    sense_number_text="#b8391f",
+    detail_label_text="#b8391f",
+    detail_word_text="#1f1c18",
+    detail_reading_text="#8a8175",
+    kanji_card_bg="transparent",
+    kanji_card_border="transparent",
+    kanji_card_rule="#b8391f",
+    kanji_glyph_bg="transparent",
+)
+
+PAPER_THEME_VARIANTS = {
+    "light": _PAPER_POPUP,
+    "dark": replace(
+        _PAPER_POPUP,
+        surface_bg="#191816",
+        surface_border="#34312c",
+        text="#ece6da",
+        definition_text="#ece6da",
+        muted_text="#9b9385",
+        word_text="#ece6da",
+        reading_text="#9b9385",
+        separator="#34312c",
+        metadata_text="#9b9385",
+        metadata_label_text="#9b9385",
+        omission_text="#9b9385",
+        deconjugation_text="#e0735a",
+        deconjugation_detail_text="#9b9385",
+        sense_number_text="#e0735a",
+        detail_label_text="#e0735a",
+        detail_word_text="#ece6da",
+        detail_reading_text="#9b9385",
+        kanji_card_rule="#e0735a",
+    ),
+}
+
 POPUP_THEMES: dict[str, PopupTokens] = {
+    "paper": _PAPER_POPUP,
     "nazeka": _BASE_POPUP,
     "nord": replace(
         _BASE_POPUP,
@@ -221,8 +304,23 @@ POPUP_THEMES: dict[str, PopupTokens] = {
 }
 
 
-def popup_tokens(theme: str | None = None) -> PopupTokens:
-    return POPUP_THEMES.get(theme or DEFAULT_POPUP_THEME, POPUP_THEMES[DEFAULT_POPUP_THEME])
+def popup_tokens(theme: str | None = None, appearance: str | None = None) -> PopupTokens:
+    theme = theme or DEFAULT_POPUP_THEME
+    if theme == "paper":
+        return PAPER_THEME_VARIANTS.get(appearance or system_appearance(), PAPER_THEME_VARIANTS["light"])
+    return POPUP_THEMES.get(theme, POPUP_THEMES[DEFAULT_POPUP_THEME])
+
+
+def system_appearance() -> str:
+    try:
+        from PyQt6.QtCore import Qt
+        from PyQt6.QtGui import QGuiApplication
+
+        if QGuiApplication.instance() and QGuiApplication.styleHints().colorScheme() == Qt.ColorScheme.Dark:
+            return "dark"
+    except Exception:
+        pass
+    return "light"
 
 
 def popup_theme_label(theme: str) -> str:
