@@ -28,7 +28,7 @@ BROWSER_PATHS = [
 ]
 
 SECTION_RE = re.compile(r"{{([#^])([A-Za-z0-9_]+)}}(.*?){{/\2}}", re.DOTALL)
-VARIABLE_RE = re.compile(r"{{([A-Za-z0-9_]+)}}")
+VARIABLE_RE = re.compile(r"{{(?:text:)?([A-Za-z0-9_]+)}}")
 
 SAMPLES = {
     "mockup": (
@@ -116,9 +116,6 @@ def page_html(case: str, side: str) -> str:
 <style>
 {CARD_CSS}
 
-html {{
-  background: #11131a;
-}}
 
 body.card.mk-debug-page {{
   min-height: 100vh;
@@ -129,19 +126,19 @@ body.card.mk-debug-page {{
   flex-direction: column;
   align-items: center;
   gap: 20px;
-  background: radial-gradient(circle at top, #202636 0, #11131a 58%);
+  background: var(--page);
 }}
 
 .mk-debug-card-wrap {{
-  width: 496px;
+  width: 720px;
+  max-width: 100%;
 }}
 
 .mk-debug-label {{
   box-sizing: border-box;
-  width: 496px;
   margin: 0 0 7px;
   padding: 0 4px;
-  color: #768195;
+  color: var(--muted);
   font: 700 11px/1.2 "SF Pro Text", "Helvetica Neue", sans-serif;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -251,7 +248,7 @@ def main() -> int:
         default=None,
         help="Chromium-based browser executable. Default: auto-detect Chrome/Chromium/Edge/Brave.",
     )
-    parser.add_argument("--width", type=int, default=560, help="Browser viewport width in CSS pixels.")
+    parser.add_argument("--width", type=int, default=780, help="Browser viewport width in CSS pixels.")
     parser.add_argument("--height", type=int, default=1100, help="Browser viewport height in CSS pixels.")
     parser.add_argument("--scale", type=float, default=1.0, help="Browser device scale factor.")
     args = parser.parse_args()

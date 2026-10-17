@@ -5,35 +5,12 @@ from typing import Iterable, Optional
 
 from meikikai.dictionary.customdict import DEFAULT_FREQ
 from meikikai.dictionary.lookup import DictionaryEntry, KanjiEntry, LookupResult
-from meikikai.gui.popup_design.tokens import POPUP
+from meikikai.gui.popup_design.tokens import PAPER_THEME_VARIANTS, POPUP
 
-DECONJ_COLOR = POPUP.deconjugation_text
-DEFINITION_COLOR = POPUP.definition_text
-DEFINITION_FONT_SIZE = POPUP.definition_font_size
-DETAIL_FONT_SIZE = POPUP.detail_font_size
-FONT_STACK_QSS = POPUP.font_stack_qss
-KANJI_GLYPH_FONT_SIZE = POPUP.kanji_glyph_font_size
-KANJI_READING_FONT_SIZE = POPUP.kanji_reading_font_size
-KANJI_BODY_ROW_GAP = POPUP.kanji_body_row_gap
-KANJI_DETAIL_TOP_GAP = POPUP.kanji_detail_top_gap
-KANJI_DETAIL_ROW_GAP = POPUP.kanji_detail_row_gap
-KANJI_DETAIL_LABEL_WIDTH = POPUP.kanji_detail_label_width
-KANJI_DETAIL_LABEL_GAP = POPUP.kanji_detail_label_gap
-KANJI_DETAIL_LINE_HEIGHT = POPUP.kanji_detail_line_height_percent / 100
 MAX_GLOSSES_PER_SENSE = POPUP.max_glosses_per_sense
 MAX_SENSES_PER_ENTRY = POPUP.max_senses_per_entry
-META_FONT_SIZE = POPUP.metadata_font_size
-META_LABEL_COLOR = POPUP.metadata_label_text
-MUTED_COLOR = POPUP.muted_text
-POPUP_WIDTH = POPUP.width
-READING_COLOR = POPUP.reading_text
-READING_FONT_SIZE = POPUP.reading_font_size
-SENSE_NUMBER_COLOR = POPUP.sense_number_text
-TEXT_COLOR = POPUP.text
-WORD_COLOR = POPUP.word_text
-DETAIL_WORD_COLOR = POPUP.detail_word_text
-DETAIL_READING_COLOR = POPUP.detail_reading_text
-WORD_FONT_SIZE = POPUP.word_font_size
+PAPER_LIGHT = PAPER_THEME_VARIANTS["light"]
+PAPER_DARK = PAPER_THEME_VARIANTS["dark"]
 
 DECK_NAME = "MeikiKai Mining"
 MODEL_NAME = "MeikiKai Vocab"
@@ -206,10 +183,10 @@ def _definitions_html(entry: DictionaryEntry) -> str:
     rows = []
     for index, sense_text in enumerate(sense_parts, 1):
         rows.append(
-            f'<span class="mk-sense-number">{index}</span>'
-            f'&nbsp;{sense_text}'
+            f'<div class="mk-sense"><span class="mk-sense-number">{index}</span>'
+            f'{sense_text}</div>'
         )
-    return "<br>".join(rows)
+    return "".join(rows)
 
 
 def _shown_definition_senses(senses: list) -> list:
@@ -264,7 +241,7 @@ def _kanji_card_html(entry: KanjiEntry) -> str:
 
     details = []
     if readings:
-        details.append(f'<div class="mk-kanji-reading">[{readings}]</div>')
+        details.append(f'<div class="mk-kanji-reading">{readings}</div>')
     if meanings:
         details.append(f'<div class="mk-kanji-meanings">{meanings}</div>')
 
@@ -302,7 +279,7 @@ def _kanji_examples_html(entry: KanjiEntry) -> str:
         if word or reading or meaning:
             parts.append(
                 f'<span class="mk-kanji-example-word">{word}</span> '
-                f'<span class="mk-kanji-example-reading">[{reading}]</span> {meaning}'
+                f'<span class="mk-kanji-example-reading">{reading}</span> {meaning}'
             )
     if not parts:
         return ""
@@ -342,389 +319,219 @@ def _join_escaped(values, separator=", ") -> str:
     return separator.join(_escape(value) for value in values if value)
 
 
-FRONT_TEMPLATE = """
-<div class="mk-card mk-front-card mk-card-root">
-  <div class="mk-front-sentence">{{SentenceHighlighted}}</div>
-</div>
-""".strip()
-
-AUDIO_BACK_TEMPLATE = """
-<div class="mk-study-layout mk-card-root">
-  <div class="mk-study-expression">
-    {{#Reading}}<div class="mk-study-reading">{{Reading}}</div>{{/Reading}}
-    <div class="mk-study-word">{{Expression}}</div>
+META_TEMPLATE = """
+  <div class="mk-meta">
+    <span><span class="mk-meta-label">MeikiKai</span>{{#FrequencyRank}} · {{FrequencyRank}}{{/FrequencyRank}}</span>
+    <a class="mk-link" href="https://jisho.org/search/{{text:Expression}}">jisho ↗</a>
   </div>
+  <div class="mk-prompt"><div class="mk-sentence">{{SentenceHighlighted}}</div></div>
+""".strip("\n")
 
-  {{#PrimaryDefinition}}<div class="mk-study-definition">{{PrimaryDefinition}}</div>{{/PrimaryDefinition}}
-  {{#SentenceHighlighted}}<div class="mk-study-sentence">{{SentenceHighlighted}}</div>{{/SentenceHighlighted}}
-
-  <div class="mk-audio-row">
-    <span class="mk-audio-item">{{WordAudio}}</span>
-  </div>
-
-  {{#Screenshot}}<div class="mk-study-screenshot">{{Screenshot}}</div>{{/Screenshot}}
-</div>
-""".strip()
-
-LEGACY_BACK_TEMPLATE = """
-<div class="mk-back-layout mk-card-root">
-  <div class="mk-card mk-front-card mk-back-sentence-card">
-    <div class="mk-front-sentence">{{SentenceHighlighted}}</div>
-    {{#Screenshot}}<div class="mk-screenshot">{{Screenshot}}</div>{{/Screenshot}}
-  </div>
-
-  <div class="mk-card mk-popup-card">
-    <div class="mk-entry">
-      <div class="mk-word-row">
-        <span class="mk-word">{{Expression}}</span>
-        {{#Reading}}<span class="mk-reading">[{{Reading}}]</span>{{/Reading}}
-      </div>
-
-      <div class="mk-meta-row">
-        {{#PartOfSpeech}}<span>{{PartOfSpeech}}</span>{{/PartOfSpeech}}
-        {{#Tags}}{{#PartOfSpeech}}<span class="mk-dot">·</span>{{/PartOfSpeech}}<span>{{Tags}}</span>{{/Tags}}
-        {{#FrequencyRank}}{{#PartOfSpeech}}<span class="mk-dot">·</span>{{/PartOfSpeech}}{{^PartOfSpeech}}{{#Tags}}<span class="mk-dot">·</span>{{/Tags}}{{/PartOfSpeech}}<span>{{FrequencyRank}}</span>{{/FrequencyRank}}
-      </div>
-
-      {{#Deconjugation}}
-      <div class="mk-deconj"><span class="mk-label">inflected</span> <span class="mk-dot">·</span> {{Deconjugation}}</div>
-      {{/Deconjugation}}
-
-      {{#Definitions}}<div class="mk-definitions">{{Definitions}}</div>{{/Definitions}}
-    </div>
-
-    {{#KanjiInfo}}<div class="mk-kanji-section">{{KanjiInfo}}</div>{{/KanjiInfo}}
-  </div>
-</div>
-""".strip()
+FRONT_TEMPLATE = (
+    '<div class="mk mk-front">\n'
+    + META_TEMPLATE
+    + '\n  <div class="mk-rule-row"></div>\n</div>'
+)
 
 BACK_TEMPLATE = (
-    "{{#WordAudio}}\n"
-    + AUDIO_BACK_TEMPLATE
-    + "\n{{/WordAudio}}\n"
-    + "{{^WordAudio}}\n"
-    + LEGACY_BACK_TEMPLATE
-    + "\n{{/WordAudio}}"
-).strip()
+    '<div class="mk mk-back">\n'
+    + META_TEMPLATE
+    + """
+  {{#WordAudio}}<div class="mk-rule-row mk-audio">{{WordAudio}}</div>{{/WordAudio}}
+  {{^WordAudio}}<div class="mk-rule-row"></div>{{/WordAudio}}
 
-CARD_CSS = f"""
-.card {{
+  <div class="mk-answer">
+    {{#Screenshot}}<div class="mk-screenshot">{{Screenshot}}</div>{{/Screenshot}}
+    {{#PrimaryDefinition}}<div class="mk-meaning">{{PrimaryDefinition}}</div>{{/PrimaryDefinition}}
+    <div class="mk-term">
+      <span class="mk-word">{{Expression}}</span>
+      {{#Reading}}<span class="mk-reading">{{Reading}}</span>{{/Reading}}
+    </div>
+    <div class="mk-pos"><span>{{PartOfSpeech}}</span><span>{{Tags}}</span></div>
+
+    <div class="mk-notes">
+      {{#Definitions}}
+      <div class="mk-note">
+        <div class="mk-note-label">Definitions</div>
+        <div class="mk-note-body mk-definitions">{{Definitions}}</div>
+      </div>
+      {{/Definitions}}
+      {{#Deconjugation}}
+      <div class="mk-note">
+        <div class="mk-note-label">Inflected</div>
+        <div class="mk-note-body mk-deconj">{{Deconjugation}}</div>
+      </div>
+      {{/Deconjugation}}
+      {{KanjiInfo}}
+    </div>
+  </div>
+</div>"""
+)
+
+
+def _paper_variables(tokens) -> str:
+    return (
+        f"  --page: {tokens.surface_bg};\n"
+        f"  --ink: {tokens.text};\n"
+        f"  --muted: {tokens.muted_text};\n"
+        f"  --rule: {tokens.separator};\n"
+        f"  --accent: {tokens.deconjugation_text};\n"
+    )
+
+
+CARD_CSS = (
+    ".card {\n"
+    + _paper_variables(PAPER_LIGHT)
+    + """  --ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Hiragino Sans", sans-serif;
+  --serif: "Iowan Old Style", "Palatino", Georgia, "Hiragino Mincho ProN", serif;
+  --jp: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
   margin: 0;
-  background: #11131a;
-  color: {TEXT_COLOR};
-  font-family: {FONT_STACK_QSS};
-  font-size: {DEFINITION_FONT_SIZE}px;
-  line-height: 1.42;
+  padding: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--ui);
+  font-size: 16px;
+  line-height: 1.5;
   text-align: left;
-}}
+  -webkit-text-size-adjust: 100%;
+}
+.card.nightMode, .card.night_mode {
+"""
+    + _paper_variables(PAPER_DARK)
+    + """  background: var(--page);
+}
+.card * { box-sizing: border-box; }
 
-.mk-card,
-.mk-back-layout {{
-  width: {POPUP_WIDTH}px;
-  max-width: calc(100vw - 24px);
+.mk {
+  display: flex;
+  flex-direction: column;
+  max-width: 720px;
   margin: 0 auto;
-  box-sizing: border-box;
-}}
+  padding: 14px 20px 36px;
+}
+@media (min-width: 600px) {
+  .mk { margin: 24px auto; padding: 18px 36px 40px; }
+}
 
-.mk-card-root {{
-  margin-top: 28px;
-}}
+.mk-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 32px;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: .03em;
+}
+.mk-meta-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.mk-link { color: var(--muted) !important; text-decoration: none; }
 
-.mk-study-layout {{
-  box-sizing: border-box;
-  color: {TEXT_COLOR};
-  margin: 0 auto;
-  max-width: calc(100vw - 24px);
+.mk-prompt { display: flex; justify-content: center; padding: 28px 0 14px; }
+.mk-sentence {
+  max-width: 100%;
+  font-family: var(--jp);
+  font-size: 36px;
+  font-weight: 500;
+  line-height: 1.95;
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+.mk-highlight { color: var(--accent); background: none; font-weight: inherit; text-decoration: none; }
+
+.mk-rule-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+}
+.mk-rule-row:not(.mk-audio)::before { content: ""; width: 40px; height: 1px; background: var(--rule); }
+.mk-audio::before, .mk-audio::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 56px;
+  height: 1px;
+  background: var(--rule);
+}
+.mk-audio::before { right: calc(50% + 32px); }
+.mk-audio::after { left: calc(50% + 32px); }
+.mk-audio .replay-button, .mk-audio .replaybutton { display: inline-flex; width: 40px; height: 40px; margin: 0; }
+.mk-audio .replay-button svg, .mk-audio .replaybutton svg { width: 40px; height: 40px; }
+.mk-audio .replay-button svg circle, .mk-audio .replaybutton svg circle { fill: none; stroke: var(--rule); stroke-width: 2; }
+.mk-audio .replay-button svg path, .mk-audio .replaybutton svg path {
+  fill: var(--muted);
+  transform: scale(.62);
+  transform-origin: 32px 32px;
+}
+
+.mk-answer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding-top: 22px;
   text-align: center;
-  width: {POPUP_WIDTH}px;
-}}
+  overflow-wrap: anywhere;
+}
+.mk-screenshot { margin-bottom: 22px; }
+.mk-screenshot img { display: block; max-width: 100%; max-height: 300px; height: auto; margin: 0 auto; }
+.mk-meaning { font-family: var(--serif); font-size: 26px; line-height: 1.3; }
+.mk-term { margin-top: 8px; color: var(--muted); font-size: 15px; }
+.mk-word { margin-right: 8px; color: var(--ink); font-family: var(--jp); font-weight: 500; }
+.mk-reading { font-family: var(--jp); }
+.mk-pos { margin-top: 2px; color: var(--muted); font-size: 12px; letter-spacing: .03em; }
+.mk-pos span:empty { display: none; }
+.mk-pos span:not(:empty) + span:not(:empty)::before { content: " · "; }
 
-.mk-study-reading {{
-  color: {TEXT_COLOR};
-  font-size: 18px;
-  line-height: 1;
-  margin-bottom: 1px;
-}}
-
-.mk-study-word {{
-  color: {TEXT_COLOR};
-  font-size: 46px;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  line-height: 1.08;
-}}
-
-.mk-study-definition {{
-  color: {TEXT_COLOR};
-  font-size: 28px;
-  line-height: 1.25;
-  margin-top: 18px;
-}}
-
-.mk-study-sentence {{
-  color: {TEXT_COLOR};
-  font-size: 25px;
-  line-height: 1.48;
-  margin-top: 30px;
-}}
-
-.mk-study-sentence .mk-highlight {{
-  color: {WORD_COLOR};
-  font-weight: 700;
-  text-decoration: none;
-}}
-
-.mk-study-screenshot {{
-  margin-top: 26px;
-  text-align: center;
-}}
-
-.mk-study-screenshot img {{
-  border-radius: 16px;
+.mk-notes {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  max-width: 34em;
+  margin: 22px auto 0;
+  color: var(--ink);
+  font-size: 15px;
+  text-align: left;
+}
+.mk-notes:empty { display: none; }
+.mk-note, .mk-kanji-card { border-left: 2px solid var(--accent); padding: 2px 0 2px 14px; }
+.mk-note-label, .mk-kanji-detail-label {
+  color: var(--accent);
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.mk-note-label { margin-bottom: 4px; }
+.mk-note-body { line-height: 1.6; }
+.mk-definitions { font-family: var(--serif); font-size: 17px; }
+.mk-sense { padding-left: 22px; text-indent: -22px; }
+.mk-sense-number {
   display: inline-block;
-  height: auto;
-  max-height: 360px;
-  max-width: 76%;
-  width: auto;
-}}
+  width: 22px;
+  color: var(--accent);
+  text-indent: 0;
+  font-family: var(--ui);
+  font-size: 13px;
+}
+.mk-deconj { color: var(--muted); }
 
-.mk-study-layout .mk-audio-row {{
-  gap: 22px;
-  margin: 24px 0 0;
-}}
+.mk-kanji-card { display: flex; align-items: flex-start; gap: 14px; }
+.mk-kanji-glyph { flex: none; font-family: var(--jp); font-size: 40px; font-weight: 500; line-height: 1.1; }
+.mk-kanji-body { flex: 1; min-width: 0; line-height: 1.5; }
+.mk-kanji-reading { color: var(--muted); font-family: var(--jp); font-size: 14px; }
+.mk-kanji-meanings { font-family: var(--serif); font-size: 16px; }
+.mk-kanji-detail-group { display: grid; gap: 4px; margin-top: 6px; }
+.mk-kanji-detail { display: flex; gap: 10px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.mk-kanji-detail-label { flex: 0 0 4.4em; padding-top: 1px; white-space: nowrap; }
+.mk-kanji-detail-body { flex: 1; min-width: 0; }
+.mk-kanji-example-word, .mk-component-char { color: var(--ink); font-family: var(--jp); font-weight: 500; }
+.mk-kanji-example-reading { font-family: var(--jp); }
 
-.mk-front-card,
-.mk-popup-card {{
-  background: #181b24;
-  color: {TEXT_COLOR};
-  border: 1px solid rgba(237, 241, 247, 0.13);
-  border-radius: 16px;
-  padding: 10px 12px 14px;
-}}
-
-.mk-front-card {{
-  padding: 17px 18px 18px;
-}}
-
-.mk-back-sentence-card {{
-  margin-bottom: 14px;
-}}
-
-.mk-screenshot {{
-  margin-top: 14px;
-  overflow: hidden;
-  border: 1px solid rgba(237, 241, 247, 0.13);
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.18);
-}}
-
-.mk-screenshot img {{
-  display: block;
-  max-width: 100%;
-  height: auto;
-}}
-
-.mk-front-sentence {{
-  color: {TEXT_COLOR};
-  font-size: 22px;
-  line-height: 1.5;
-  letter-spacing: 0.01em;
-  font-weight: 400;
-}}
-
-.mk-context-strip {{
-  box-sizing: border-box;
-  width: {POPUP_WIDTH}px;
-  max-width: calc(100vw - 24px);
-  margin: 0 auto 8px;
-  padding: 0 2px;
-  color: {MUTED_COLOR};
-  font-size: 14px;
-  line-height: 1.5;
-}}
-
-.mk-highlight {{
-  color: inherit;
-  background: transparent;
-  padding: 0;
-  font-weight: 500;
-  text-decoration: underline;
-  text-decoration-color: {WORD_COLOR};
-  text-decoration-thickness: 0.12em;
-  text-underline-offset: 0.16em;
-}}
-
-.mk-word-row {{
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 2px 8px;
-}}
-
-.mk-word {{
-  color: {WORD_COLOR};
-  font-size: {WORD_FONT_SIZE}px;
-  line-height: 1.16;
-  font-weight: 600;
-}}
-
-.mk-reading {{
-  color: {READING_COLOR};
-  font-size: {READING_FONT_SIZE}px;
-  font-weight: 500;
-}}
-
-.mk-audio-row {{
-  align-items: center;
-  display: flex;
-  gap: 18px;
-  justify-content: center;
-  margin: 18px 0 2px;
-}}
-
-.mk-audio-item {{
-  align-items: center;
-  display: inline-flex;
-  line-height: 1;
-}}
-
-.mk-audio-row .replay-button,
-.mk-audio-row .replaybutton {{
-  margin: 0;
-}}
-
-.mk-meta-row {{
-  margin-top: 1px;
-  color: #929cae;
-  font-size: {META_FONT_SIZE}px;
-  line-height: 1.25;
-}}
-
-.mk-meta-row:empty {{
-  display: none;
-}}
-
-.mk-dot {{
-  color: {META_LABEL_COLOR};
-  margin: 0 5px;
-}}
-
-.mk-label {{
-  color: {DECONJ_COLOR};
-  font-weight: 700;
-}}
-
-.mk-deconj {{
-  margin-top: 2px;
-  color: {DECONJ_COLOR};
-  font-size: {META_FONT_SIZE}px;
-  line-height: 1.25;
-}}
-
-.mk-definitions {{
-  margin-top: 5px;
-  color: {DEFINITION_COLOR};
-  font-size: {DEFINITION_FONT_SIZE}px;
-  line-height: 1.45;
-  font-weight: 400;
-}}
-
-.mk-sense-number {{
-  color: {SENSE_NUMBER_COLOR};
-  display: inline-block;
-  font-weight: 600;
-  min-width: 14px;
-}}
-
-.mk-kanji-section {{
-  margin-top: 8px;
-}}
-
-.mk-kanji-card {{
-  display: flex;
-  gap: 9px;
-  box-sizing: border-box;
-  margin-top: 8px;
-  padding: 8px;
-  background: rgba(139, 216, 255, 0.05);
-  border: 1px solid rgba(237, 241, 247, 0.09);
-  border-radius: 10px;
-}}
-
-.mk-kanji-card:first-child {{
-  margin-top: 0;
-}}
-
-.mk-kanji-glyph {{
-  flex: 0 0 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: {WORD_COLOR};
-  background: rgba(139, 216, 255, 0.07);
-  border-radius: 9px;
-  font-size: {KANJI_GLYPH_FONT_SIZE}px;
-  line-height: 1;
-  font-weight: 500;
-}}
-
-.mk-kanji-body {{
-  min-width: 0;
-  flex: 1;
-  line-height: 1.34;
-}}
-
-.mk-kanji-reading {{
-  color: {READING_COLOR};
-  font-size: {KANJI_READING_FONT_SIZE}px;
-  font-weight: 700;
-}}
-
-.mk-kanji-meanings {{
-  color: {DEFINITION_COLOR};
-  font-size: {DEFINITION_FONT_SIZE}px;
-}}
-
-.mk-kanji-reading + .mk-kanji-meanings {{
-  margin-top: {KANJI_BODY_ROW_GAP}px;
-}}
-
-.mk-kanji-detail-group {{
-  margin-top: {KANJI_DETAIL_TOP_GAP}px;
-}}
-
-.mk-kanji-detail {{
-  align-items: flex-start;
-  color: {MUTED_COLOR};
-  display: flex;
-  font-size: {DETAIL_FONT_SIZE}px;
-  gap: {KANJI_DETAIL_LABEL_GAP}px;
-  line-height: {KANJI_DETAIL_LINE_HEIGHT:.2f};
-}}
-
-.mk-kanji-detail + .mk-kanji-detail {{
-  margin-top: {KANJI_DETAIL_ROW_GAP}px;
-}}
-
-.mk-kanji-detail-label {{
-  color: {META_LABEL_COLOR};
-  flex: 0 0 {KANJI_DETAIL_LABEL_WIDTH}px;
-  font-weight: 600;
-}}
-
-.mk-kanji-detail-body {{
-  min-width: 0;
-}}
-
-.mk-kanji-example-word,
-.mk-component-char {{
-  color: {DETAIL_WORD_COLOR};
-  font-weight: 600;
-}}
-
-.mk-kanji-example-reading {{
-  color: {DETAIL_READING_COLOR};
-}}
+@media (max-width: 480px) {
+  .mk { padding-left: 12px; padding-right: 12px; }
+  .mk-prompt { padding-top: 20px; }
+  .mk-sentence { font-size: 30px; }
+  .mk-meaning { font-size: 23px; }
+}
 """.strip()
+)
