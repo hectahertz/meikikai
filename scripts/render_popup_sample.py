@@ -22,8 +22,12 @@ from PyQt6.QtWidgets import QApplication  # noqa: E402
 
 from meikikai.config.config import config  # noqa: E402
 from meikikai.dictionary.lookup import DictionaryEntry, KanjiEntry  # noqa: E402
-from meikikai.gui.popup import Popup  # noqa: E402
+from meikikai.gui.popup import Popup, register_supplemental_fonts  # noqa: E402
+from meikikai.gui.popup_design import tokens as popup_design_tokens  # noqa: E402
 from meikikai.gui.popup_design.tokens import DEFAULT_POPUP_THEME, POPUP_THEME_LABELS, POPUP_THEME_OPTIONS  # noqa: E402
+
+RENDER_APPEARANCE = {"value": "light"}
+popup_design_tokens.system_appearance = lambda: RENDER_APPEARANCE["value"]
 
 OUTPUT_DIR = ROOT / "design" / "popup-screenshots"
 CONTACT_SHEET = ROOT / "design" / "popup-contact-sheet.png"
@@ -31,6 +35,8 @@ README_COMPACT = ROOT / "design" / "meikikai_popup_compact.png"
 README_STANDARD = ROOT / "design" / "meikikai_popup_standard.png"
 README_COMPLETE = ROOT / "design" / "meikikai_popup_complete.png"
 README_THEME_ASSETS = {
+    "paper": ROOT / "design" / "meikikai_popup_theme_paper.png",
+    "paper_dark": ROOT / "design" / "meikikai_popup_theme_paper_dark.png",
     "nazeka": ROOT / "design" / "meikikai_popup_theme_nazeka.png",
     "nord": ROOT / "design" / "meikikai_popup_theme_nord.png",
     "catppuccin": ROOT / "design" / "meikikai_popup_theme_catppuccin.png",
@@ -455,7 +461,7 @@ def render_readme_theme_assets() -> list[tuple[str, str, Path, int, int]]:
     return _render_theme_cases(
         [
             (theme, "standard", 1, 2, 3, "single-kanji", mockup_entries)
-            for theme in POPUP_THEME_OPTIONS
+            for theme in (*POPUP_THEME_OPTIONS, "paper_dark")
         ],
         lambda _index, theme, _layout, _entries, _senses, _glosses, _sample_name: README_THEME_ASSETS[theme],
     )
@@ -515,7 +521,8 @@ def _render_theme_cases(cases, output_for_case) -> list[tuple[str, str, Path, in
     rendered = []
     try:
         for index, (theme, layout, entries, senses, glosses, sample_name, factory) in enumerate(cases, 1):
-            config.popup_theme = theme
+            RENDER_APPEARANCE["value"] = "dark" if theme == "paper_dark" else "light"
+            config.popup_theme = "paper" if theme == "paper_dark" else theme
             config.popup_layout = layout
             config.popup_vocab_entries = entries
             config.popup_senses_per_entry = senses
@@ -524,6 +531,7 @@ def _render_theme_cases(cases, output_for_case) -> list[tuple[str, str, Path, in
             width, height = render(factory(), output)
             rendered.append((theme, layout, output, width, height))
     finally:
+        RENDER_APPEARANCE["value"] = "light"
         (
             config.popup_theme,
             config.popup_layout,
@@ -627,6 +635,8 @@ def _sample_by_key(key: str) -> PopupSample:
 
 
 def main() -> int:
+    _app = QApplication.instance() or QApplication([])
+    register_supplemental_fonts()
     parser = argparse.ArgumentParser(description="Render MeikiKai popup review PNGs.")
     parser.add_argument(
         "case",
@@ -666,7 +676,7 @@ def main() -> int:
 
     if args.case == "readme-themes":
         for theme, _layout, image, width, height in render_readme_theme_assets():
-            print(f"{image.relative_to(ROOT)} ({POPUP_THEME_LABELS[theme]}, {width}x{height})")
+            print(f"{image.relative_to(ROOT)} ({POPUP_THEME_LABELS.get(theme, theme)}, {width}x{height})")
         return 0
 
     if args.case == "layout-options":

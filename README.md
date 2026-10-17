@@ -3,7 +3,7 @@
 MeikiKai is a macOS menu bar OCR popup dictionary for Japanese. It uses local Chrome Screen AI OCR on the selected display, looks up the text under your cursor, and shows a compact dictionary popup.
 
 <p align="center">
-  <img width="496" alt="MeikiKai popup example using the default Nord theme" src="design/meikikai_popup_complete.png">
+  <img width="496" alt="MeikiKai popup example using the default Paper theme" src="design/meikikai_popup_complete.png">
 </p>
 
 MeikiKai is a fork of [rtr46/meikipop](https://github.com/rtr46/meikipop). It is macOS-only.
@@ -16,7 +16,7 @@ MeikiKai is a fork of [rtr46/meikipop](https://github.com/rtr46/meikipop). It is
 - Supports horizontal and vertical Japanese OCR results.
 - Lets you choose the scan target: one display or all displays.
 - Provides popup density controls: layout, number of entries, senses per entry, and glosses per sense.
-- Uses Nord as the default popup theme, with Nazeka, Catppuccin, and Kanagawa Wave available.
+- Uses Paper as the default popup theme, following the macOS light or dark appearance, with Nord, Nazeka, Catppuccin, and Kanagawa Wave available.
 - Can copy the top visible entry, speak its reading, open it on Jisho.org, or export it directly to Anki.
 - Can optionally pause macOS Now Playing media while the popup is visible, then resume only media it paused.
 
@@ -39,12 +39,20 @@ Layout changes the popup width, spacing, metadata visibility, and kanji presenta
 
 ## Popup themes
 
-Nord is the default MeikiKai theme. Nazeka is the legacy Meikipop-style palette. Catppuccin and Kanagawa Wave are alternate dark palettes.
+Paper is the default MeikiKai theme: a warm paper surface with Mincho Japanese, serif glosses, and vermilion accents. It switches between light and dark with the macOS appearance. Nord, Catppuccin, and Kanagawa Wave are alternate dark palettes, and Nazeka is the legacy Meikipop-style palette.
 
 <table>
   <tr>
+    <th>Paper (default, light)</th>
+    <th>Paper (default, dark)</th>
+  </tr>
+  <tr>
+    <td><img width="380" alt="MeikiKai Paper popup theme in light mode" src="design/meikikai_popup_theme_paper.png"></td>
+    <td><img width="380" alt="MeikiKai Paper popup theme in dark mode" src="design/meikikai_popup_theme_paper_dark.png"></td>
+  </tr>
+  <tr>
     <th>Nazeka</th>
-    <th>Nord (default)</th>
+    <th>Nord</th>
   </tr>
   <tr>
     <td><img width="380" alt="MeikiKai Nazeka popup theme" src="design/meikikai_popup_theme_nazeka.png"></td>
@@ -146,7 +154,8 @@ Export behavior:
 - Blocks duplicates using MeikiKai's `Key` field, based on entry ID, expression, and reading.
 - Includes expression, reading, lookup text, highlighted sentence, definitions, part-of-speech, tags, frequency, deconjugation, kanji info, entry ID, and optional cropped image/audio fields.
 - If Speech and Attach audio to Anki are enabled, generates word audio with the `Meikikai Siri TTS` Shortcut, converts it to `.m4a`, uploads it through AnkiConnect, and attaches it as a `[sound:...]` field.
-- Audio-enabled cards use a centered word-card back layout with a replay button; cards without audio keep the legacy back layout.
+- Cards use the Paper style and follow Anki's night mode. The front shows the sentence with the mined word in the accent color; the back keeps the sentence in place and adds the screenshot, meaning, reading, definitions, inflection, and kanji notes. When word audio is attached, its replay button sits under the sentence.
+- Exporting updates the `MeikiKai Vocab` template and styling, so existing MeikiKai cards switch to the current design too.
 - By default, opens the native macOS crop UI before adding the card. Press Esc to cancel card creation, or disable image capture in Settings.
 
 ## Dictionaries

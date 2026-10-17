@@ -159,7 +159,7 @@ POPUP_THEME_LABELS = {
     "kanagawa_wave": "Kanagawa Wave",
 }
 POPUP_THEME_OPTIONS = tuple(POPUP_THEME_LABELS)
-DEFAULT_POPUP_THEME = "nord"
+DEFAULT_POPUP_THEME = "paper"
 
 _BASE_POPUP = PopupTokens()
 
