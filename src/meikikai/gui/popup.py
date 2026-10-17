@@ -9,7 +9,7 @@ from typing import List, Optional
 
 from PyQt6.QtCore import QTimer, QPoint, QRect, QSize, pyqtSignal
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QCursor, QFont, QTextBlockFormat, QTextCursor
+from PyQt6.QtGui import QCursor, QFont, QFontDatabase, QTextBlockFormat, QTextCursor
 from PyQt6.QtWidgets import (
     QApplication,
     QFrame,
@@ -63,6 +63,18 @@ logger = logging.getLogger(__name__)
 
 VISIBLE_POLL_INTERVAL_MS = 10
 HIDDEN_POLL_INTERVAL_MS = 100
+SUPPLEMENTAL_FONT_FILES = ("/System/Library/Fonts/Supplemental/Iowan Old Style.ttc",)
+_supplemental_fonts_registered = False
+
+
+def register_supplemental_fonts():
+    global _supplemental_fonts_registered
+    if _supplemental_fonts_registered:
+        return
+    _supplemental_fonts_registered = True
+    for path in SUPPLEMENTAL_FONT_FILES:
+        if os.path.exists(path) and QFontDatabase.addApplicationFont(path) < 0:
+            logger.warning(f"Failed to register font file: {path}")
 
 class FlowLayout(QLayout):
     def __init__(self, parent=None, h_spacing=7, v_spacing=5):
@@ -170,6 +182,7 @@ class Popup(QWidget):
     latest_data_ready = pyqtSignal()
 
     def __init__(self, shared_state):
+        register_supplemental_fonts()
         super().__init__()
         self._latest_data = None
         self._last_latest_data = None
